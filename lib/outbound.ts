@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendGmail } from "@/lib/gmail";
+import { resendSend } from "@/lib/resend";
 import { sendSms } from "@/lib/twilio";
 import { logActivity } from "@/lib/activity";
 import { toE164 } from "@/lib/lead-parse";
@@ -164,22 +165,23 @@ export async function sendEmailToLead(params: {
         existingMessageId: params.existingMessageId,
       });
     }
+    // No Gmail → verified custom domain via Resend, so non-Gmail tenants can
+    // still send as team@theirdomain.com. Reply-To points at their monitored
+    // inbox so replies re-enter the pipeline.
     if (env.resendConfigured) {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.resendKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: env.resendFrom,
-          to: lead.email,
-          subject: params.subject,
-          text: params.body,
-        }),
+      const sd = await db.sendingDomain.findUnique({
+        where: { tenantId: tenant.id },
       });
-      if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
-      const json = (await res.json()) as { id?: string };
+      const verified = sd?.status === "VERIFIED";
+      const json = await resendSend({
+        from: verified
+          ? `${tenant.name} <${sd.fromEmail}>`
+          : env.resendFrom,
+        to: lead.email,
+        subject: params.subject,
+        text: params.body,
+        replyTo: verified ? sd.replyTo : undefined,
+      });
       return await recordOutbound({
         tenantId: tenant.id,
         leadId: lead.id,
@@ -190,6 +192,7 @@ export async function sendEmailToLead(params: {
         externalId: json.id,
         isAiGenerated: params.isAiGenerated,
         existingMessageId: params.existingMessageId,
+        note: verified ? `from ${sd.fromEmail}` : undefined,
       });
     }
     // Simulated send — keeps the full loop testable without any credentials.

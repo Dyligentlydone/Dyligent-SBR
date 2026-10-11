@@ -28,11 +28,19 @@ interface Props {
     cardOnFile: boolean;
     stripeConfigured: boolean;
   };
+  sendingDomain: {
+    domain: string;
+    fromEmail: string;
+    replyTo: string;
+    status: string;
+    records: { record: string; name: string; type: string; value: string }[];
+  } | null;
+  resendConfigured: boolean;
   isDev: boolean;
   monthlyPrice: number;
 }
 
-export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled, forwardingAddress, billing, isDev, monthlyPrice }: Props) {
+export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled, forwardingAddress, billing, sendingDomain, resendConfigured, isDev, monthlyPrice }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: tenant.name,
@@ -56,6 +64,22 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
   const [areaCode, setAreaCode] = useState("");
   const [provisioning, setProvisioning] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
+  const [domainForm, setDomainForm] = useState({ domain: "", fromLocal: "hello", replyTo: "" });
+  const [domainBusy, setDomainBusy] = useState(false);
+
+  async function domainAction(method: "POST" | "PUT" | "DELETE") {
+    setDomainBusy(true);
+    setError(null);
+    const res = await fetch("/api/sending-domain", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: method === "POST" ? JSON.stringify(domainForm) : undefined,
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) setError(j.error ?? "Domain action failed");
+    router.refresh();
+    setDomainBusy(false);
+  }
 
   async function billingAction(url: string, payload?: object) {
     setBillingBusy(true);
@@ -354,6 +378,113 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
               Auto-forward lead-notification emails to this address — works with any inbox:
             </p>
             <code className="mt-2 block rounded-lg bg-zinc-100 px-3 py-2 text-sm">{forwardingAddress}</code>
+          </div>
+
+          {/* Send as your own domain — for tenants without Gmail */}
+          <div className="rounded-lg border border-zinc-100 p-4">
+            <p className="text-sm font-medium">Send from your own domain</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {sendingDomain?.status === "VERIFIED"
+                ? `Outbound emails go out as ${sendingDomain.fromEmail}. Replies land in ${sendingDomain.replyTo}.`
+                : gmailEmail
+                  ? "You're sending through Gmail — only needed if you want a different From address."
+                  : "Not on Gmail? Verify your domain and outreach emails go out as you@yourdomain.com."}
+            </p>
+
+            {!sendingDomain && resendConfigured && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <input
+                  className="w-48 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  placeholder="yourdomain.com"
+                  value={domainForm.domain}
+                  onChange={(e) => setDomainForm((f) => ({ ...f, domain: e.target.value }))}
+                />
+                <input
+                  className="w-36 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  placeholder="from (e.g. team)"
+                  value={domainForm.fromLocal}
+                  onChange={(e) => setDomainForm((f) => ({ ...f, fromLocal: e.target.value }))}
+                />
+                <input
+                  className="w-56 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  placeholder="replies go to (you@yourdomain.com)"
+                  value={domainForm.replyTo}
+                  onChange={(e) => setDomainForm((f) => ({ ...f, replyTo: e.target.value }))}
+                />
+                <button
+                  disabled={domainBusy || !domainForm.domain || !domainForm.replyTo}
+                  onClick={() => domainAction("POST")}
+                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                >
+                  {domainBusy ? "Adding…" : "Register domain"}
+                </button>
+              </div>
+            )}
+
+            {sendingDomain && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-mono">{sendingDomain.fromEmail}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      sendingDomain.status === "VERIFIED"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {sendingDomain.status === "VERIFIED" ? "Verified" : "Pending DNS"}
+                  </span>
+                </div>
+                {sendingDomain.status !== "VERIFIED" && sendingDomain.records.length > 0 && (
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-100">
+                    <p className="px-3 py-2 text-xs text-zinc-500">
+                      Add these records at your domain registrar (GoDaddy, Cloudflare, Namecheap…), then verify:
+                    </p>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-zinc-100 text-left text-zinc-400">
+                          <th className="px-3 py-1.5 font-medium">Type</th>
+                          <th className="px-3 py-1.5 font-medium">Name</th>
+                          <th className="px-3 py-1.5 font-medium">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-50">
+                        {sendingDomain.records.map((r, i) => (
+                          <tr key={i}>
+                            <td className="whitespace-nowrap px-3 py-1.5 font-mono">{r.type}</td>
+                            <td className="px-3 py-1.5 font-mono">{r.name}</td>
+                            <td className="max-w-xs truncate px-3 py-1.5 font-mono text-zinc-500" title={r.value}>
+                              {r.value}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="mt-3 flex gap-2">
+                  {sendingDomain.status !== "VERIFIED" && (
+                    <button
+                      disabled={domainBusy}
+                      onClick={() => domainAction("PUT")}
+                      className="rounded-lg bg-teal-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                    >
+                      {domainBusy ? "Checking…" : "Verify DNS"}
+                    </button>
+                  )}
+                  <button
+                    disabled={domainBusy}
+                    onClick={() => domainAction("DELETE")}
+                    className="rounded-lg px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+            {!sendingDomain && !resendConfigured && (
+              <p className="mt-2 text-xs text-zinc-400">Resend is not configured on this instance.</p>
+            )}
           </div>
 
           <div className="rounded-lg border border-zinc-100 p-4">

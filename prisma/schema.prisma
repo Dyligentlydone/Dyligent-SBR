@@ -114,6 +114,7 @@ model Tenant {
   memberships Membership[]
   gmail       GmailConnection?
   twilio      TwilioConnection?
+  sendingDomain SendingDomain?
   leads       Lead[]
   messages    Message[]
   tasks       ScheduledTask[]
@@ -151,6 +152,22 @@ model TwilioConnection {
   phoneNumber String
   phoneSid    String?
   tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// Verified sending domain — lets non-Gmail tenants send "from" their own
+// address via Resend (SPF/DKIM verified). status: PENDING | VERIFIED | FAILED
+model SendingDomain {
+  id             String    @id @default(cuid())
+  tenantId       String    @unique
+  domain         String // reliableair.com
+  resendDomainId String?
+  records        String?   @db.Text // JSON DNS records to show the owner
+  fromEmail      String // e.g. team@reliableair.com
+  replyTo        String // monitored inbox where replies should land
+  status         String    @default("PENDING")
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 // ── Leads & messaging ───────────────────────────────────────────────────────

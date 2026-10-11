@@ -95,6 +95,19 @@ Connections). Point an inbound-parse provider (SendGrid Inbound Parse, Mailgun
 Routes, Postmark) at `POST /api/inbound/email`. JSON, form, and raw RFC822 are
 accepted. In dev, the **Test tools** page posts to the same endpoint.
 
+### Outbound email identity
+Outreach email is sent as the business, in priority order:
+
+1. **Gmail connected** → sent via the Gmail API from their actual address
+   (shows in their Sent folder, threads correctly, replies come back to the
+   monitored inbox). Easiest path — covers Gmail & Google Workspace.
+2. **Verified custom domain** → Settings → Connections → "Send from your own
+   domain" registers the domain with Resend, shows the SPF/DKIM records to
+   add at the registrar, then "Verify DNS". Once verified, outbound goes out
+   as e.g. `team@reliableair.com` with `Reply-To` pointed at the inbox they
+   monitor (so replies still re-enter the pipeline via forwarding).
+3. **Generic `RESEND_FROM`** fallback, or **simulated** when no Resend key.
+
 ### Twilio
 1. Set `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` and a public
    `TWILIO_WEBHOOK_BASE_URL` (ngrok in dev).

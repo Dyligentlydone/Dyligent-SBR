@@ -16,9 +16,10 @@ export default async function SettingsPage({
   if (!ctx?.tenant) redirect("/onboarding");
   const { gmail: gmailFlash } = await searchParams;
 
-  const [gmail, twilio] = await Promise.all([
+  const [gmail, twilio, sendingDomain] = await Promise.all([
     db.gmailConnection.findUnique({ where: { tenantId: ctx.tenant.id } }),
     db.twilioConnection.findUnique({ where: { tenantId: ctx.tenant.id } }),
+    db.sendingDomain.findUnique({ where: { tenantId: ctx.tenant.id } }),
   ]);
 
   return (
@@ -41,6 +42,18 @@ export default async function SettingsPage({
           twilioNumber={twilio?.phoneNumber ?? null}
           googleEnabled={env.googleConfigured}
           forwardingAddress={`lead+${ctx.tenant.forwardingToken}@${env.inboundDomain}`}
+          sendingDomain={
+            sendingDomain
+              ? {
+                  domain: sendingDomain.domain,
+                  fromEmail: sendingDomain.fromEmail,
+                  replyTo: sendingDomain.replyTo,
+                  status: sendingDomain.status,
+                  records: sendingDomain.records ? JSON.parse(sendingDomain.records) : [],
+                }
+              : null
+          }
+          resendConfigured={env.resendConfigured}
           billing={getBillingStatus(ctx.tenant)}
           isDev={process.env.NODE_ENV === "development"}
           monthlyPrice={MONTHLY_PRICE_USD}
