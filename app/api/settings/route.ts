@@ -13,6 +13,8 @@ const schema = z.object({
   bookingPhone: z.string().max(30).optional().or(z.literal("")),
   handoffRules: z.string().max(2000).optional().or(z.literal("")),
   extraContext: z.string().max(4000).optional().or(z.literal("")),
+  websiteUrl: z.string().max(300).optional().or(z.literal("")),
+  googleBusinessUrl: z.string().max(500).optional().or(z.literal("")),
   autoSend: z.boolean().optional(),
   followUpEnabled: z.boolean().optional(),
   followUpDelayHours: z.number().int().min(1).max(168).optional(),

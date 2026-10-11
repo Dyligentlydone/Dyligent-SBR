@@ -26,6 +26,10 @@ export const env = {
     return Boolean(this.twilioSid && this.twilioToken);
   },
 
+  // Google Places API — optional, enriches the business profile scan with
+  // hours/ratings/reviews from the tenant's Google Business Profile.
+  placesKey: process.env.GOOGLE_PLACES_API_KEY ?? "",
+
   resendKey: process.env.RESEND_API_KEY ?? "",
   resendFrom: process.env.RESEND_FROM ?? "Dyligent SDR <outbound@localhost>",
   get resendConfigured() {

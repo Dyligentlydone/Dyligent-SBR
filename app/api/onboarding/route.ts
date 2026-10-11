@@ -13,6 +13,9 @@ const schema = z.object({
   bookingPhone: z.string().max(30).optional().or(z.literal("")),
   handoffRules: z.string().max(2000).optional(),
   extraContext: z.string().max(4000).optional(),
+  websiteUrl: z.string().max(300).optional().or(z.literal("")),
+  googleBusinessUrl: z.string().max(500).optional().or(z.literal("")),
+  businessProfile: z.string().max(12000).optional(),
 });
 
 // Creates the tenant + owner membership the first time through onboarding.

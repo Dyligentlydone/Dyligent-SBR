@@ -23,10 +23,46 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
     bookingPhone: "",
     handoffRules: "",
     extraContext: "",
+    websiteUrl: "",
+    googleBusinessUrl: "",
+    businessProfile: "",
   });
+  const [scanning, setScanning] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
 
   const set = (k: keyof typeof data) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setData((d) => ({ ...d, [k]: e.target.value }));
+
+  // Scrape the website + GBP link, then prefill the business-info fields.
+  async function scan() {
+    setScanning(true);
+    setScanNote(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/business-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteUrl: data.websiteUrl, googleBusinessUrl: data.googleBusinessUrl }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? "Scan failed");
+      setData((d) => ({
+        ...d,
+        businessProfile: j.businessProfile ?? d.businessProfile,
+        name: d.name || j.suggested?.name || d.name,
+        services: d.services || j.suggested?.services || d.services,
+        serviceArea: d.serviceArea || j.suggested?.serviceArea || d.serviceArea,
+      }));
+      setScanNote(
+        `Scanned ${j.pagesScanned ?? 0} page(s)${j.gbpResolved ? " + Google profile" : ""} — review and edit the prefilled fields.`,
+      );
+      setStep(1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scan failed");
+    } finally {
+      setScanning(false);
+    }
+  }
 
   async function submit() {
     setLoading(true);
@@ -40,7 +76,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? "Could not save");
       setForwarding(`lead+${j.forwardingToken}@inbound.dyligent.app`);
-      setStep(2);
+      setStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -52,7 +88,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
     <div className="w-full max-w-lg">
       {/* progress */}
       <div className="mb-8 flex gap-2">
-        {["Your business", "Booking & rules", "Connect email"].map((s, i) => (
+        {["Online presence", "Your business", "Booking & rules", "Connect email"].map((s, i) => (
           <div key={s} className="flex-1">
             <div className={`h-1.5 rounded-full ${i <= step ? "bg-teal-600" : "bg-zinc-200"}`} />
             <p className="mt-1.5 text-xs text-zinc-500">{s}</p>
@@ -62,6 +98,45 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
 
       {step === 0 && (
         <div className="space-y-4">
+          <p className="text-sm text-zinc-600">
+            Point us at your online presence — we&apos;ll scan it to teach your AI rep about
+            your services, service area, and what customers love about you.
+          </p>
+          <div>
+            <label className={labelCls}>Your website</label>
+            <input className={inputCls} value={data.websiteUrl} onChange={set("websiteUrl")} placeholder="e.g. reliableair.com" />
+          </div>
+          <div>
+            <label className={labelCls}>Google Business Profile link (optional)</label>
+            <input
+              className={inputCls}
+              value={data.googleBusinessUrl}
+              onChange={set("googleBusinessUrl")}
+              placeholder="e.g. https://maps.app.goo.gl/… or g.page/…"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              From Google Maps → your listing → Share. We pull your hours, rating &amp; review highlights.
+            </p>
+          </div>
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          <button
+            onClick={scan}
+            disabled={scanning || (!data.websiteUrl.trim() && !data.googleBusinessUrl.trim())}
+            className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+          >
+            {scanning ? "Scanning your business…" : "Scan & prefill"}
+          </button>
+          <button onClick={() => setStep(1)} className="w-full text-sm text-zinc-500 hover:text-zinc-700">
+            Skip — I&apos;ll fill it in manually
+          </button>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="space-y-4">
+          {scanNote && (
+            <p className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">{scanNote}</p>
+          )}
           <div>
             <label className={labelCls}>Business name</label>
             <input className={inputCls} value={data.name} onChange={set("name")} placeholder="e.g. Reliable Air Heating & Cooling" />
@@ -89,7 +164,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
             </select>
           </div>
           <button
-            onClick={() => data.name.trim() ? setStep(1) : setError("Business name is required")}
+            onClick={() => data.name.trim() ? setStep(2) : setError("Business name is required")}
             className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
           >
             Continue
@@ -97,7 +172,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
         </div>
       )}
 
-      {step === 1 && (
+      {step === 2 && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -134,7 +209,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
           </div>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="flex gap-3">
-            <button onClick={() => setStep(0)} className="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-50">
+            <button onClick={() => setStep(1)} className="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-semibold hover:bg-zinc-50">
               Back
             </button>
             <button
@@ -148,7 +223,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
         </div>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <div className="space-y-5">
           <p className="text-sm text-zinc-600">
             Connect your inbox so Dyligent can spot new leads. Pick either option —
@@ -188,7 +263,7 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
           </button>
         </div>
       )}
-      {error && step === 0 && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && step === 1 && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
     </div>
   );
 }

@@ -48,7 +48,39 @@ function companyContext(tenant: Tenant): string {
   if (tenant.bookingLink) lines.push(`Booking link to offer: ${tenant.bookingLink}`);
   if (tenant.bookingPhone) lines.push(`Booking phone to offer: ${tenant.bookingPhone}`);
   if (tenant.extraContext) lines.push(`Additional context: ${tenant.extraContext}`);
+  if (tenant.businessProfile)
+    lines.push(`\nIntel learned from the business's own website/online presence:\n${tenant.businessProfile.slice(0, 6000)}`);
   return lines.join("\n");
+}
+
+// ── Onboarding: extract a business profile from scraped web pages ───────────
+
+export interface ExtractedProfile {
+  businessName?: string;
+  services?: string;
+  serviceArea?: string;
+  summary: string; // prompt-ready intel block stored in tenant.businessProfile
+}
+
+export async function extractBusinessProfile(
+  siteText: string,
+  gbpText?: string,
+): Promise<ExtractedProfile | null> {
+  const source = [siteText, gbpText].filter(Boolean).join("\n\n");
+  if (!source.trim()) return null;
+
+  const { result, aiGenerated } = await askClaude<ExtractedProfile>(
+    `You extract a structured business profile from a home-services company's web pages and Google Business Profile data, to brief an AI sales rep that will answer their inbound leads. Be factual — only include what's actually stated. Output ONLY valid JSON.`,
+    `Web content:\n${source}\n\nReturn JSON: {"businessName": "...", "services": "comma-separated services offered", "serviceArea": "cities/areas served", "summary": "dense briefing for the AI rep: services, service area, hours, differentiators, what customers praise in reviews, common job types — max 1200 chars"}`,
+    () => ({
+      // No Claude key: still store a trimmed raw-text profile so context
+      // isn't empty — it beats nothing in the prompt.
+      summary: source.slice(0, 1500),
+    }),
+  );
+  // A null/empty fallback result means extraction produced nothing usable.
+  if (!result.summary && aiGenerated) return null;
+  return result;
 }
 
 const GUARDRAILS = `STRICT RULES — never break these:

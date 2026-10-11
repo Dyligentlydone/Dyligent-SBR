@@ -12,6 +12,7 @@ interface Props {
     name: string; services: string; serviceArea: string; avgJobValue: string | null;
     tone: string; bookingLink: string | null; bookingPhone: string | null;
     handoffRules: string | null; extraContext: string | null;
+    websiteUrl: string | null; googleBusinessUrl: string | null; businessProfile: string | null;
     autoSend: boolean; followUpEnabled: boolean; followUpDelayHours: number;
     maxFollowUps: number; dailySendLimit: number; forwardingToken: string;
   };
@@ -52,6 +53,8 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
     bookingPhone: tenant.bookingPhone ?? "",
     handoffRules: tenant.handoffRules ?? "",
     extraContext: tenant.extraContext ?? "",
+    websiteUrl: tenant.websiteUrl ?? "",
+    googleBusinessUrl: tenant.googleBusinessUrl ?? "",
     followUpDelayHours: tenant.followUpDelayHours,
     maxFollowUps: tenant.maxFollowUps,
     dailySendLimit: tenant.dailySendLimit,
@@ -66,6 +69,24 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
   const [billingBusy, setBillingBusy] = useState(false);
   const [domainForm, setDomainForm] = useState({ domain: "", fromLocal: "hello", replyTo: "" });
   const [domainBusy, setDomainBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanMsg, setScanMsg] = useState<string | null>(null);
+
+  async function rescan() {
+    setScanning(true);
+    setScanMsg(null);
+    setError(null);
+    const res = await fetch("/api/business-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ websiteUrl: form.websiteUrl, googleBusinessUrl: form.googleBusinessUrl }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) setError(j.error ?? "Scan failed");
+    else setScanMsg(`Profile updated — ${j.pagesScanned ?? 0} page(s) scanned${j.gbpResolved ? " + Google profile" : ""}`);
+    router.refresh();
+    setScanning(false);
+  }
 
   async function domainAction(method: "POST" | "PUT" | "DELETE") {
     setDomainBusy(true);
@@ -193,6 +214,29 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
         <div className="mt-4">
           <label className={labelCls}>Extra context</label>
           <textarea className={inputCls} rows={3} value={form.extraContext} onChange={set("extraContext")} />
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>Website</label>
+            <input className={inputCls} value={form.websiteUrl} onChange={set("websiteUrl")} placeholder="yourdomain.com" />
+          </div>
+          <div>
+            <label className={labelCls}>Google Business Profile link</label>
+            <input className={inputCls} value={form.googleBusinessUrl} onChange={set("googleBusinessUrl")} placeholder="https://maps.app.goo.gl/…" />
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={rescan}
+            disabled={scanning || (!form.websiteUrl.trim() && !form.googleBusinessUrl.trim())}
+            className="rounded-lg border border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+          >
+            {scanning ? "Scanning…" : "Re-scan online presence"}
+          </button>
+          {tenant.businessProfile && (
+            <span className="text-xs text-zinc-500">AI has learned {tenant.businessProfile.length} chars of intel from your site</span>
+          )}
+          {scanMsg && <span className="text-xs text-teal-700">{scanMsg}</span>}
         </div>
       </section>
 

@@ -85,6 +85,10 @@ model Tenant {
   avgJobValue   String?
   tone          String   @default("friendly") // friendly | professional | casual
   extraContext  String?  @db.Text // freeform notes (warranties, brands, hours…)
+  // Auto-learned context: site scrape + Google Business Profile
+  websiteUrl        String?
+  googleBusinessUrl String?
+  businessProfile   String?  @db.Text // extracted intel summary fed to prompts
   // Booking + handoff rules
   bookingLink   String?
   bookingPhone  String?

@@ -121,14 +121,15 @@ Tasks (first outreach, follow-ups) are DB rows processed by `/api/cron/tick`.
 - **Prod:** Vercel Cron or any scheduler hitting `/api/cron/tick` with
   `Authorization: Bearer $CRON_SECRET` every minute.
 
-## Product rules baked in
+### Business profile scan (agent training)
+Onboarding step 1 asks for the business's **website URL** and **Google Business
+Profile link**. `lib/scrape.ts` fetches the homepage plus services/about/FAQ
+pages, `lib/ai.ts` distills it into `tenant.businessProfile` — a briefing block
+injected into every AI prompt (`companyContext`). With `GOOGLE_PLACES_API_KEY`
+the GBP link also contributes hours, rating, and review highlights; without it,
+the resolved business name. Settings → Company can edit the URLs and re-scan.
 
-- **Never invent pricing** — pricing questions trigger handoff.
-- **Handoff triggers:** ready-to-book, pricing, angry, complex (+ owner-defined rules).
-- **Default = human approval.** `autoSend` is opt-in in Settings.
-- **Deliverability:** daily send limit, proper Gmail threading, dedupe on
-  provider message ids.
-- **Isolation:** every query scopes by `tenantId`.
+## Product rules baked in
 
 ## Not implemented yet (by design)
 
