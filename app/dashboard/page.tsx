@@ -93,11 +93,11 @@ export default async function DashboardPage() {
           <div className="mt-2 divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
             {leads.length === 0 && (
               <p className="px-4 py-8 text-center text-sm text-zinc-500">
-                No leads yet — try{" "}
-                <Link href="/dashboard/simulate" className="text-teal-700 underline">
-                  Test tools
-                </Link>{" "}
-                to send a sample inbound email.
+                No leads yet — connect Gmail or set up forwarding in{" "}
+                <Link href="/dashboard/settings" className="text-teal-700 underline">
+                  Settings
+                </Link>
+                .
               </p>
             )}
             {leads.map((l) => (

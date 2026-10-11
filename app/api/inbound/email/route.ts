@@ -8,8 +8,8 @@ import { handleLeadReply } from "@/lib/replies";
 //   1. Real forwarding: point a parse service (SendGrid Inbound Parse, Mailgun,
 //      Postmark…) at this URL. We identify the tenant from the +token in the
 //      To address:  lead+<forwardingToken>@<domain>
-//   2. Dev/simulate: POST JSON { token, from, subject, text } — the dashboard's
-//      "Simulate inbound email" tool uses this.
+//   2. Simple JSON: POST { token, from, subject, text } — handy for testing
+//      the pipeline with curl.
 
 function extractToken(to: string): string | null {
   const m = to.match(/lead\+([a-z0-9]+)@/i);

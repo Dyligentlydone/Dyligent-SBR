@@ -45,9 +45,9 @@ export default async function LeadsPage({
       <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white">
         {leads.length === 0 && (
           <p className="px-4 py-12 text-center text-sm text-zinc-500">
-            No leads here yet.{" "}
-            <Link href="/dashboard/simulate" className="text-teal-700 underline">
-              Send a test lead
+            No leads here yet — connect Gmail or set up forwarding in{" "}
+            <Link href="/dashboard/settings" className="text-teal-700 underline">
+              Settings
             </Link>
             .
           </p>

@@ -27,8 +27,6 @@ export function LeadActions({
   const router = useRouter();
   const [channel, setChannel] = useState<"SMS" | "EMAIL">(hasPhone ? "SMS" : "EMAIL");
   const [body, setBody] = useState("");
-  const [simBody, setSimBody] = useState("");
-  const [showSim, setShowSim] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,37 +146,6 @@ export function LeadActions({
         >
           Send reply
         </button>
-      </div>
-
-      {/* simulate inbound reply (dev) */}
-      <div className="border-t border-zinc-100 pt-4">
-        <button
-          onClick={() => setShowSim((s) => !s)}
-          className="text-xs font-medium text-zinc-500 hover:text-zinc-700"
-        >
-          {showSim ? "− Hide" : "+ Simulate a reply from this lead"}
-        </button>
-        {showSim && (
-          <div className="mt-2">
-            <textarea
-              className={inputCls}
-              rows={2}
-              value={simBody}
-              onChange={(e) => setSimBody(e.target.value)}
-              placeholder="e.g. Yes, Tuesday afternoon works for me!"
-            />
-            <button
-              disabled={busy || !simBody.trim()}
-              onClick={async () => {
-                if (await call(`/api/leads/${leadId}/simulate-reply`, { channel, body: simBody }))
-                  setSimBody("");
-              }}
-              className="mt-2 w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold hover:bg-zinc-50 disabled:opacity-60"
-            >
-              Simulate inbound {channel === "SMS" ? "text" : "email"}
-            </button>
-          </div>
-        )}
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

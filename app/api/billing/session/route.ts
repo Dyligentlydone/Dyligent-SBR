@@ -14,9 +14,11 @@ export async function POST(req: Request) {
   if (!env.stripeConfigured)
     return NextResponse.json({ error: "Stripe is not configured" }, { status: 501 });
 
-  const { mode } = (await req.json().catch(() => ({}))) as { mode?: string };
+  const body = (await req.json().catch(() => ({}))) as { mode?: string; returnTo?: string };
+  const { mode } = body;
   if (mode !== "setup" && mode !== "subscription")
     return NextResponse.json({ error: "mode must be setup|subscription" }, { status: 400 });
+  const returnTo = body.returnTo?.startsWith("/") ? body.returnTo : "/dashboard/settings";
 
   const stripe = new Stripe(env.stripeSecretKey);
   const session = await stripe.checkout.sessions.create({
@@ -30,8 +32,8 @@ export async function POST(req: Request) {
     ...(mode === "subscription"
       ? { line_items: [{ price: env.stripePriceId, quantity: 1 }] }
       : {}),
-    success_url: `${env.appUrl}/dashboard/settings?billing=success`,
-    cancel_url: `${env.appUrl}/dashboard/settings?billing=cancelled`,
+    success_url: `${env.appUrl}${returnTo}?billing=success`,
+    cancel_url: `${env.appUrl}${returnTo}?billing=cancelled`,
   });
   return NextResponse.json({ url: session.url });
 }

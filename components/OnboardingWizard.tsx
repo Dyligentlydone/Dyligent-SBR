@@ -7,7 +7,7 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
 const labelCls = "mb-1 block text-sm font-medium";
 
-export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) {
+export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabled: boolean; stripeEnabled: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +29,27 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
   });
   const [scanning, setScanning] = useState(false);
   const [scanNote, setScanNote] = useState<string | null>(null);
+  const [cardBusy, setCardBusy] = useState(false);
+
+  // Optional card-on-file during onboarding — no charge until the free
+  // gate (2 bookings / 60 days) trips.
+  async function addCard() {
+    setCardBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "setup", returnTo: "/dashboard" }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (j.url) window.location.href = j.url; // Stripe Checkout
+      else throw new Error(j.error ?? "Could not open card setup");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Card setup failed");
+      setCardBusy(false);
+    }
+  }
 
   const set = (k: keyof typeof data) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setData((d) => ({ ...d, [k]: e.target.value }));
@@ -254,6 +275,24 @@ export function OnboardingWizard({ googleEnabled }: { googleEnabled: boolean }) 
               Forward lead-notification emails (or set an auto-forward rule) to:
             </p>
             <code className="mt-2 block rounded-lg bg-zinc-100 px-3 py-2 text-sm">{forwarding ?? "…"}</code>
+          </div>
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <p className="font-semibold">Payment — optional</p>
+            <p className="mt-1 text-sm text-zinc-600">
+              Dyligent is free until it books 2 real appointments (or 60 days). Add a card now and
+              it&apos;s on file when that happens — <span className="font-medium">you won&apos;t be charged today</span>.
+            </p>
+            {stripeEnabled ? (
+              <button
+                onClick={addCard}
+                disabled={cardBusy}
+                className="mt-3 rounded-lg border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+              >
+                {cardBusy ? "Opening secure checkout…" : "Add a card (optional)"}
+              </button>
+            ) : (
+              <p className="mt-2 text-xs text-zinc-400">Card setup isn&apos;t enabled on this instance — you can add it later in Settings.</p>
+            )}
           </div>
           <button
             onClick={() => router.push("/dashboard")}

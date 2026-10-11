@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
     <main className="flex min-h-screen flex-col items-center px-6 py-16">
       <p className="text-sm font-semibold uppercase tracking-widest text-teal-700">Dyligent SDR</p>
       <h1 className="mb-10 mt-2 text-2xl font-bold">Let&apos;s set up your AI SDR</h1>
-      <OnboardingWizard googleEnabled={env.googleConfigured} />
+      <OnboardingWizard googleEnabled={env.googleConfigured} stripeEnabled={env.stripeConfigured} />
     </main>
   );
 }

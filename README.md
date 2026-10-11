@@ -41,8 +41,14 @@ npm run dev                    # http://localhost:3000
 ```
 
 **Zero-config demo:** no external keys needed — SMS/email sends are *simulated*
-(logged to the activity feed), and the AI falls back to templates. Use
-**Test tools → Simulate inbound email** to push a lead through the loop.
+(logged to the activity feed), and the AI falls back to templates. Push a test
+lead through the loop with:
+
+```bash
+curl -X POST http://localhost:3001/api/inbound/email \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"<forwardingToken>","from":"Jane <jane@example.com>","subject":"AC repair","text":"My AC went out. Call me at 512-555-0134."}'
+```
 
 ## Environment variables
 
@@ -93,7 +99,7 @@ then $499/mo.** Mechanics:
 Each tenant gets `lead+<forwardingToken>@INBOUND_EMAIL_DOMAIN` (Settings →
 Connections). Point an inbound-parse provider (SendGrid Inbound Parse, Mailgun
 Routes, Postmark) at `POST /api/inbound/email`. JSON, form, and raw RFC822 are
-accepted. In dev, the **Test tools** page posts to the same endpoint.
+accepted — the JSON form is handy for curling test leads in dev.
 
 ### Outbound email identity
 Outreach email is sent as the business, in priority order:
