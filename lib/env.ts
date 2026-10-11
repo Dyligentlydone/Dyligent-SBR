@@ -34,6 +34,14 @@ export const env = {
 
   cronSecret: process.env.CRON_SECRET ?? "",
 
+  // Stripe billing
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripePriceId: process.env.STRIPE_PRICE_ID ?? "", // recurring $499/mo price
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  get stripeConfigured() {
+    return Boolean(this.stripeSecretKey && this.stripePriceId);
+  },
+
   // Domain for per-tenant inbound forwarding addresses (lead+<token>@domain).
   inboundDomain: process.env.INBOUND_EMAIL_DOMAIN ?? "inbound.dyligent.app",
 

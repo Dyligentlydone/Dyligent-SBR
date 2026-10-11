@@ -120,6 +120,7 @@ export default async function LeadDetailPage({
             status={lead.status}
             hasPhone={Boolean(lead.phone)}
             hasEmail={Boolean(lead.email)}
+            bookingConfirmed={lead.bookingConfirmed}
           />
         </div>
       </div>

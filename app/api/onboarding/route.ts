@@ -35,6 +35,9 @@ export async function POST(req: Request) {
         data: {
           ...parsed.data,
           onboardingComplete: true,
+          trialEndsAt: new Date(
+            Date.now() + Number(process.env.TRIAL_DAYS ?? 60) * 24 * 3600 * 1000,
+          ),
           memberships: { create: { userId: ctx.userId, role: "owner" } },
         },
       });

@@ -60,6 +60,25 @@ See `.env.example`. Highlights:
 | `CRON_SECRET` | Protects `/api/cron/tick` and `/api/gmail/poll` in prod |
 | `INBOUND_EMAIL_DOMAIN` | Domain for `lead+<token>@…` forwarding addresses |
 | `OUTREACH_DELAY_MINUTES` | First-touch delay (default 5; try `0.1` for demos) |
+| `STRIPE_SECRET_KEY` + `STRIPE_PRICE_ID` | Billing (recurring $499/mo price) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook → `/api/billing/webhook` |
+| `TRIAL_DAYS` | Free-trial length (default 60) |
+
+## Billing model
+
+**Free until it books 2 appointments — or for 60 days, whichever comes first,
+then $499/mo.** Mechanics:
+
+- A booking only counts when the **owner confirms it** (button on the lead, or
+  setting status to BOOKED) — AI-suspected bookings aren't billing events.
+- After booking #1, the dashboard nudges the owner to add a card — Stripe
+  Checkout in `setup` mode stores a payment method **with no charge**.
+- When the gate trips (2nd confirmed booking or day 60): card on file →
+  subscription created off-session; no card → account `PAUSED`.
+- Paused accounts still ingest leads and show everything — only outbound
+  sends are blocked (drafts stay queued, tasks retry daily for 2 weeks).
+- Dev: `POST /api/billing/dev-activate` `{mode: trial|active|pause}` flips
+  states without Stripe.
 
 ## Wiring real integrations
 

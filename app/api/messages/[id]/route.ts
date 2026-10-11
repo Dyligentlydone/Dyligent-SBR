@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireTenant } from "@/lib/tenant";
 import { sendSmsToLead, sendEmailToLead } from "@/lib/outbound";
 import { logActivity } from "@/lib/activity";
+import { canSend } from "@/lib/billing";
 
 // Actions on a DRAFT message: approve (send as-is / with edits) or reject.
 
@@ -38,6 +39,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   // Approve: persist any edits, then send through the real channel.
+  const gate = canSend(tenant);
+  if (!gate.allowed)
+    return NextResponse.json({ error: gate.reason }, { status: 402 });
+
   // The draft row itself is updated to SENT/FAILED — no duplicate message.
   const body = parsed.data.body?.trim() || message.body;
   const subject = parsed.data.subject?.trim() || message.subject || undefined;

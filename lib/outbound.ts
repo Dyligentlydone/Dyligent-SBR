@@ -4,6 +4,7 @@ import { sendGmail } from "@/lib/gmail";
 import { sendSms } from "@/lib/twilio";
 import { logActivity } from "@/lib/activity";
 import { toE164 } from "@/lib/lead-parse";
+import { canSend } from "@/lib/billing";
 import type { Lead, Tenant } from "@prisma/client";
 
 // Outbound send orchestration. Three senders exist, in priority order:
@@ -69,6 +70,13 @@ export async function sendSmsToLead(params: {
   existingMessageId?: string;
 }) {
   const { tenant, lead } = params;
+  const gate = canSend(tenant);
+  if (!gate.allowed) {
+    await logActivity(tenant.id, "SEND_BLOCKED", `SMS not sent — ${gate.reason}`, {
+      leadId: lead.id,
+    });
+    return null;
+  }
   if (!lead.phone) {
     await logActivity(tenant.id, "SEND_SKIPPED", "No phone number on lead — SMS skipped", {
       leadId: lead.id,
@@ -118,6 +126,13 @@ export async function sendEmailToLead(params: {
   existingMessageId?: string;
 }) {
   const { tenant, lead } = params;
+  const gate = canSend(tenant);
+  if (!gate.allowed) {
+    await logActivity(tenant.id, "SEND_BLOCKED", `Email not sent — ${gate.reason}`, {
+      leadId: lead.id,
+    });
+    return null;
+  }
   if (!lead.email) {
     await logActivity(tenant.id, "SEND_SKIPPED", "No email address on lead — email skipped", {
       leadId: lead.id,

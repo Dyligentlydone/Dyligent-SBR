@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { draftInitialOutreach } from "@/lib/ai";
 import { sendSmsToLead, sendEmailToLead, sentTodayCount } from "@/lib/outbound";
 import { logActivity } from "@/lib/activity";
+import { canSend } from "@/lib/billing";
 import type { ScheduledTask } from "@prisma/client";
 
 // Tiny DB-backed scheduler. Tasks are rows with `runAt`; /api/cron/tick calls
@@ -9,11 +10,36 @@ import type { ScheduledTask } from "@prisma/client";
 // in prod point Vercel Cron / an external scheduler at it. No queues needed.
 
 async function runInitialOutreach(task: ScheduledTask) {
-  const { leadId } = JSON.parse(task.payload) as { leadId: string };
+  const { leadId, reschedules = 0 } = JSON.parse(task.payload) as {
+    leadId: string;
+    reschedules?: number;
+  };
   const lead = await db.lead.findUnique({ where: { id: leadId }, include: { tenant: true } });
   if (!lead || lead.status !== "OUTREACH_SCHEDULED") return; // cancelled/booked already
 
   const tenant = lead.tenant;
+
+  // Billing gate: paused tenants keep their leads but outreach waits. Retry
+  // daily for 2 weeks in case they subscribe, then give up quietly.
+  if (!canSend(tenant).allowed) {
+    if (reschedules < 14) {
+      await db.scheduledTask.create({
+        data: {
+          tenantId: tenant.id,
+          type: "INITIAL_OUTREACH",
+          payload: JSON.stringify({ leadId, reschedules: reschedules + 1 }),
+          runAt: new Date(Date.now() + 24 * 3600 * 1000),
+        },
+      });
+      await logActivity(
+        tenant.id,
+        "OUTREACH_PAUSED",
+        `Outreach paused for ${lead.name ?? "lead"} — ${canSend(tenant).reason}`,
+        { leadId: lead.id },
+      );
+    }
+    return; // original task stays DONE (claimed above)
+  }
 
   // Deliverability guard: bail if the tenant hit today's send cap.
   if ((await sentTodayCount(tenant.id)) >= tenant.dailySendLimit) {
@@ -105,6 +131,8 @@ async function runFollowUp(task: ScheduledTask) {
   if (lead.status !== "CONTACTED") return;
 
   const tenant = lead.tenant;
+  // Paused account → drop the follow-up entirely rather than nudging forever.
+  if (!canSend(tenant).allowed) return;
   const nudge = `Hi ${(lead.name ?? "there").split(" ")[0]}, just bumping this up — are you still looking for help with ${lead.summary ?? "your project"}? Happy to get you scheduled whenever works.`;
 
   if (tenant.autoSend) {

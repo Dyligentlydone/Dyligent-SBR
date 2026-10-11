@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireTenant } from "@/lib/tenant";
 import { logActivity } from "@/lib/activity";
+import { onBookingConfirmed, onBookingRevoked } from "@/lib/billing";
 
 const VALID_STATUSES = [
   "NEW", "OUTREACH_SCHEDULED", "CONTACTED", "RESPONDED",
@@ -22,11 +23,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const lead = await db.lead.findFirst({ where: { id, tenantId: tenant.id } });
   if (!lead) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  await db.lead.update({ where: { id }, data: { status: parsed.data.status } });
+  const next = parsed.data.status;
+  const toBooked = next === "BOOKED" && !lead.bookingConfirmed;
+  const fromBooked = next !== "BOOKED" && lead.bookingConfirmed;
+
+  // Owner marking a lead BOOKED IS the confirmation — it counts toward the
+  // free tier. Un-marking releases it.
+  await db.lead.update({
+    where: { id },
+    data: { status: next, bookingConfirmed: next === "BOOKED" },
+  });
+  if (toBooked) await onBookingConfirmed(tenant.id, id);
+  if (fromBooked) await onBookingRevoked(tenant.id, id);
+
   await logActivity(
     tenant.id,
     "STATUS_CHANGED",
-    `Status: ${lead.status} → ${parsed.data.status}`,
+    `Status: ${lead.status} → ${next}`,
     { leadId: id },
   );
   return NextResponse.json({ ok: true });

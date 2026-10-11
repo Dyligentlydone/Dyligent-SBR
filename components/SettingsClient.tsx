@@ -19,9 +19,20 @@ interface Props {
   twilioNumber: string | null;
   googleEnabled: boolean;
   forwardingAddress: string;
+  billing: {
+    effective: "FREE" | "ACTIVE" | "PAUSED";
+    status: string;
+    bookingsUsed: number;
+    bookingsLimit: number;
+    daysLeft: number;
+    cardOnFile: boolean;
+    stripeConfigured: boolean;
+  };
+  isDev: boolean;
+  monthlyPrice: number;
 }
 
-export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled, forwardingAddress }: Props) {
+export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled, forwardingAddress, billing, isDev, monthlyPrice }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: tenant.name,
@@ -44,6 +55,22 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [areaCode, setAreaCode] = useState("");
   const [provisioning, setProvisioning] = useState(false);
+  const [billingBusy, setBillingBusy] = useState(false);
+
+  async function billingAction(url: string, payload?: object) {
+    setBillingBusy(true);
+    setError(null);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+    const j = await res.json().catch(() => ({}));
+    if (j.url) window.location.href = j.url; // Stripe Checkout / portal
+    else if (!res.ok) setError(j.error ?? "Billing action failed");
+    else router.refresh();
+    setBillingBusy(false);
+  }
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.type === "number" ? Number(e.target.value) : e.target.value }));
@@ -186,6 +213,107 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
       <button onClick={() => save()} className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800">
         {saved ? "Saved ✓" : "Save settings"}
       </button>
+
+      {/* ── Plan & billing ── */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 className="font-semibold">Plan</h2>
+        {billing.effective === "FREE" && (
+          <>
+            <p className="mt-1 text-sm text-zinc-600">
+              Free until it books{" "}
+              <strong>
+                {billing.bookingsLimit} appointments or {billing.daysLeft} day
+                {billing.daysLeft === 1 ? "" : "s"} pass
+              </strong>{" "}
+              — whichever comes first. Then ${monthlyPrice}/mo.
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
+                <div
+                  className="h-full rounded-full bg-teal-600"
+                  style={{ width: `${(billing.bookingsUsed / billing.bookingsLimit) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-zinc-500">
+                {billing.bookingsUsed}/{billing.bookingsLimit} bookings
+              </span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {!billing.cardOnFile && billing.stripeConfigured && (
+                <button
+                  disabled={billingBusy}
+                  onClick={() => billingAction("/api/billing/session", { mode: "setup" })}
+                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                >
+                  Add a card — no charge yet
+                </button>
+              )}
+              {billing.cardOnFile && (
+                <p className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">
+                  Card on file ✓ — billing starts only when your free tier ends.
+                </p>
+              )}
+              {!billing.stripeConfigured && (
+                <p className="text-xs text-zinc-400">Stripe not configured on this instance.</p>
+              )}
+            </div>
+          </>
+        )}
+        {billing.effective === "PAUSED" && (
+          <>
+            <p className="mt-1 text-sm text-zinc-600">
+              <strong className="text-amber-700">Outreach is paused.</strong> Your free tier
+              ended ({billing.bookingsUsed}/{billing.bookingsLimit} bookings). Leads are still
+              being captured — resume to keep working them.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {billing.stripeConfigured && (
+                <button
+                  disabled={billingBusy}
+                  onClick={() => billingAction("/api/billing/session", { mode: "subscription" })}
+                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                >
+                  Subscribe — ${monthlyPrice}/mo
+                </button>
+              )}
+              {!billing.stripeConfigured && (
+                <p className="text-xs text-zinc-400">Stripe not configured on this instance.</p>
+              )}
+            </div>
+          </>
+        )}
+        {billing.effective === "ACTIVE" && (
+          <div className="mt-1 flex items-center justify-between">
+            <p className="text-sm text-zinc-600">
+              <strong className="text-teal-700">Subscribed</strong> — ${monthlyPrice}/mo, cancel anytime.
+            </p>
+            {billing.stripeConfigured && (
+              <button
+                disabled={billingBusy}
+                onClick={() => billingAction("/api/billing/portal")}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60"
+              >
+                Manage billing
+              </button>
+            )}
+          </div>
+        )}
+        {isDev && !billing.stripeConfigured && (
+          <div className="mt-4 flex gap-2 border-t border-zinc-100 pt-4">
+            <p className="mr-2 self-center text-xs text-zinc-400">Dev:</p>
+            {["trial", "active", "pause"].map((m) => (
+              <button
+                key={m}
+                disabled={billingBusy}
+                onClick={() => billingAction("/api/billing/dev-activate", { mode: m })}
+                className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50"
+              >
+                set {m}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* ── Connections ── */}
       <section className="rounded-xl border border-zinc-200 bg-white p-5">

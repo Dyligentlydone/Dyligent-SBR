@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { processDueTasks } from "@/lib/tasks";
+import { expireTrials } from "@/lib/billing";
 
 // Runs due ScheduledTasks (initial outreach, follow-ups).
 // - Dev: the dashboard's <CronTicker> pings this on a timer.
@@ -17,7 +18,8 @@ function authorized(req: Request): boolean {
 async function tick(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const processed = await processDueTasks();
-  return NextResponse.json({ ok: true, processed });
+  const trialsExpired = await expireTrials();
+  return NextResponse.json({ ok: true, processed, trialsExpired });
 }
 
 export const GET = tick;

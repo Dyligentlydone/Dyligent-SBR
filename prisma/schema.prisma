@@ -98,6 +98,15 @@ model Tenant {
   // Unique forwarding address token → lead+<token>@<inbound-domain>
   forwardingToken String  @unique @default(cuid())
   onboardingComplete Boolean @default(false)
+  // Billing: free until `freeBookingLimit` confirmed bookings OR `trialEndsAt`.
+  // subscriptionStatus: TRIAL | ACTIVE | PAUSED | PAST_DUE | CANCELLED
+  trialEndsAt        DateTime?
+  freeBookingLimit   Int      @default(2)
+  confirmedBookings  Int      @default(0)
+  subscriptionStatus String   @default("TRIAL")
+  stripeCustomerId   String?
+  stripePaymentMethodId String?
+  stripeSubscriptionId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +167,8 @@ model Lead {
   rawMessage    String?  @db.Text // original inbound content
   status        String   @default("NEW")
   followUpCount Int      @default(0)
+  // Owner-confirmed bookings are the billing event — AI only suspects them.
+  bookingConfirmed Boolean @default(false)
   gmailThreadId String?
   gmailMessageId String?
   createdAt     DateTime @default(now())

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { draftReply } from "@/lib/ai";
 import { sendSmsToLead, sendEmailToLead } from "@/lib/outbound";
 import { logActivity } from "@/lib/activity";
+import { canSend } from "@/lib/billing";
 import type { Lead, Tenant } from "@prisma/client";
 
 // Handle a reply from a lead. Classifies intent, then either:
@@ -54,7 +55,9 @@ export async function handleLeadReply(params: {
     return draft;
   }
 
-  if (tenant.autoSend) {
+  // Auto-send only while the account can actually send; paused accounts get
+  // a draft instead so the owner sees it once billing is sorted.
+  if (tenant.autoSend && canSend(tenant).allowed) {
     if (channel === "SMS" && lead.phone)
       await sendSmsToLead({ tenant, lead, body, isAiGenerated: aiGenerated });
     else if (lead.email)
@@ -86,7 +89,7 @@ export async function handleLeadReply(params: {
     await logActivity(
       tenant.id,
       "DRAFT_CREATED",
-      `AI drafted a ${channel} reply to ${lead.name ?? "lead"} — waiting in review queue`,
+      `AI drafted a ${channel} reply to ${lead.name ?? "lead"} — waiting in review queue${tenant.autoSend ? " (auto-send paused: billing)" : ""}`,
       { leadId: lead.id },
     );
   }

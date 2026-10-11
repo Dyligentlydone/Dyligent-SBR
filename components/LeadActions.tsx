@@ -16,11 +16,13 @@ export function LeadActions({
   status,
   hasPhone,
   hasEmail,
+  bookingConfirmed,
 }: {
   leadId: string;
   status: string;
   hasPhone: boolean;
   hasEmail: boolean;
+  bookingConfirmed: boolean;
 }) {
   const router = useRouter();
   const [channel, setChannel] = useState<"SMS" | "EMAIL">(hasPhone ? "SMS" : "EMAIL");
@@ -53,6 +55,32 @@ export function LeadActions({
 
   return (
     <div className="space-y-4">
+      {/* booking confirmation — the billing event */}
+      {status === "BOOKED" && !bookingConfirmed && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <p className="text-xs font-medium text-amber-900">
+            The AI thinks this lead booked. Confirm to count it toward your free tier.
+          </p>
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              await fetch(`/api/leads/${leadId}/confirm-booking`, { method: "POST" });
+              setBusy(false);
+              router.refresh();
+            }}
+            className="mt-2 w-full rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+          >
+            Confirm booking
+          </button>
+        </div>
+      )}
+      {bookingConfirmed && (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-800">
+          Booking confirmed — counts toward your free tier.
+        </p>
+      )}
+
       {/* status */}
       <div>
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">

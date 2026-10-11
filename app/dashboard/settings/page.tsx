@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
+import { getBillingStatus, MONTHLY_PRICE_USD } from "@/lib/billing";
 import { getSessionContext } from "@/lib/tenant";
 import { SettingsClient } from "@/components/SettingsClient";
 
@@ -40,6 +41,9 @@ export default async function SettingsPage({
           twilioNumber={twilio?.phoneNumber ?? null}
           googleEnabled={env.googleConfigured}
           forwardingAddress={`lead+${ctx.tenant.forwardingToken}@${env.inboundDomain}`}
+          billing={getBillingStatus(ctx.tenant)}
+          isDev={process.env.NODE_ENV === "development"}
+          monthlyPrice={MONTHLY_PRICE_USD}
         />
       </div>
     </div>
