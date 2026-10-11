@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import type { Tenant } from "@prisma/client";
@@ -16,6 +17,9 @@ export interface SessionContext {
  * Returns null userId when unauthenticated.
  */
 export const getSessionContext = cache(async (): Promise<SessionContext | null> => {
+  // auth() reads cookies + crypto → request-time only. connection() marks the
+  // route dynamic so Next's prerender checks don't flag it.
+  await connection();
   const session = await auth();
   if (!session?.user?.id) return null;
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 import { AuthForm } from "@/components/AuthForm";
 import { env } from "@/lib/env";
@@ -7,6 +8,7 @@ import { env } from "@/lib/env";
 export const instant = false;
 
 export default async function LoginPage() {
+  await connection();
   if ((await auth())?.user) redirect("/dashboard");
 
   return (

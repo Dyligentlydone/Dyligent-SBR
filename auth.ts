@@ -10,6 +10,9 @@ import { db } from "@/lib/db";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
+  // Accept any Host header — required behind preview proxies / tunnels where
+  // the request host differs from AUTH_URL (otherwise login loops back).
+  trustHost: true,
   pages: { signIn: "/login" },
   providers: [
     Google({

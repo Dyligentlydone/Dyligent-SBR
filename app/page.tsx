@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 
 export const instant = false;
 
 export default async function Landing() {
+  await connection(); // auth() uses crypto — render at request time
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
