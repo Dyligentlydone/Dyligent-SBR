@@ -13,7 +13,7 @@ export const env = {
   },
 
   anthropicKey: process.env.ANTHROPIC_API_KEY ?? "",
-  anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5",
+  anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001",
   get anthropicConfigured() {
     return Boolean(this.anthropicKey);
   },

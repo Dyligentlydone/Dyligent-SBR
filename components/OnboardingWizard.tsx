@@ -120,8 +120,8 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
       {step === 0 && (
         <div className="space-y-4">
           <p className="text-sm text-zinc-600">
-            Point us at your online presence — we&apos;ll scan it to teach your AI rep about
-            your services, service area, and what customers love about you.
+            Point us at your online presence. We&apos;ll scan it to train your new SDR Manager
+            about your services, service area, and what customers love about you.
           </p>
           <div>
             <label className={labelCls}>Your website</label>
@@ -146,9 +146,6 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
             className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
           >
             {scanning ? "Scanning your business…" : "Scan & prefill"}
-          </button>
-          <button onClick={() => setStep(1)} className="w-full text-sm text-zinc-500 hover:text-zinc-700">
-            Skip — I&apos;ll fill it in manually
           </button>
         </div>
       )}
