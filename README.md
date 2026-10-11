@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dyligent SDR
 
-## Getting Started
+AI-powered inbound lead response for home services businesses (HVAC, plumbing,
+electrical, roofing, remodeling). When a new lead hits your inbox, Dyligent
+waits ~5 minutes, then texts and emails the lead like a human would — follows
+up, answers basic questions, and hands off to you when it matters.
 
-First, run the development server:
+## Core loop
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+inbound email → lead created → ~5 min delay → AI first-touch (SMS + email)
+→ reply → intent classified → draft (review queue) or auto-send → handoff when needed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js 16** (App Router) + TypeScript + Tailwind CSS
+- **Prisma + PostgreSQL** — multi-tenant (`tenantId` on every row)
+- **NextAuth v5** — email/password + Google sign-in
+- **Anthropic Claude** — drafting + intent classification (template fallback when no key)
+- **Gmail API** — inbox monitoring + sending (OAuth)
+- **Twilio** — per-tenant outbound SMS number + inbound webhook
+- **Resend** — optional transactional fallback for outbound email
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Quick start
 
-## Learn More
+```bash
+# 1. Postgres (or point DATABASE_URL at your own)
+docker compose up -d
 
-To learn more about Next.js, take a look at the following resources:
+# 2. Env
+cp .env.example .env           # generate AUTH_SECRET: openssl rand -base64 32
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 3. DB schema + demo data
+npm install
+npm run db:migrate
+npm run db:seed                # demo@dyligent.app / password123
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 4. Run
+npm run dev                    # http://localhost:3000
+```
 
-## Deploy on Vercel
+**Zero-config demo:** no external keys needed — SMS/email sends are *simulated*
+(logged to the activity feed), and the AI falls back to templates. Use
+**Test tools → Simulate inbound email** to push a lead through the loop.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `.env.example`. Highlights:
+
+| Var | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection string |
+| `AUTH_SECRET` | NextAuth session secret |
+| `GOOGLE_CLIENT_ID/SECRET` | Google sign-in **and** Gmail connect |
+| `ANTHROPIC_API_KEY` | AI drafting (omit → template fallback) |
+| `TWILIO_ACCOUNT_SID/AUTH_TOKEN` | SMS (omit → simulated sends) |
+| `TWILIO_WEBHOOK_BASE_URL` | Public URL for the SMS webhook (e.g. ngrok) |
+| `RESEND_API_KEY` | Email fallback when Gmail isn't connected |
+| `CRON_SECRET` | Protects `/api/cron/tick` and `/api/gmail/poll` in prod |
+| `INBOUND_EMAIL_DOMAIN` | Domain for `lead+<token>@…` forwarding addresses |
+| `OUTREACH_DELAY_MINUTES` | First-touch delay (default 5; try `0.1` for demos) |
+
+## Wiring real integrations
+
+### Google (sign-in + Gmail)
+1. Google Cloud Console → OAuth consent screen + OAuth client (Web).
+2. Redirect URIs: `…/api/auth/callback/google` (sign-in) and `…/api/gmail/callback` (Gmail connect).
+3. Enable the Gmail API. Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
+4. In Settings → Connections → **Connect Gmail**. Use **Sync now** or let the
+   dashboard poll it (~every 100s in dev).
+
+### Email forwarding intake
+Each tenant gets `lead+<forwardingToken>@INBOUND_EMAIL_DOMAIN` (Settings →
+Connections). Point an inbound-parse provider (SendGrid Inbound Parse, Mailgun
+Routes, Postmark) at `POST /api/inbound/email`. JSON, form, and raw RFC822 are
+accepted. In dev, the **Test tools** page posts to the same endpoint.
+
+### Twilio
+1. Set `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` and a public
+   `TWILIO_WEBHOOK_BASE_URL` (ngrok in dev).
+2. Settings → Connections → **Get a number** — provisions a local SMS-capable
+   number and sets its webhook to `/api/webhooks/twilio`.
+3. Inbound SMS to that number joins the conversation pipeline automatically.
+
+### Scheduler
+Tasks (first outreach, follow-ups) are DB rows processed by `/api/cron/tick`.
+- **Dev:** the dashboard pings it every 20s via `<CronTicker>` — nothing to set up.
+- **Prod:** Vercel Cron or any scheduler hitting `/api/cron/tick` with
+  `Authorization: Bearer $CRON_SECRET` every minute.
+
+## Product rules baked in
+
+- **Never invent pricing** — pricing questions trigger handoff.
+- **Handoff triggers:** ready-to-book, pricing, angry, complex (+ owner-defined rules).
+- **Default = human approval.** `autoSend` is opt-in in Settings.
+- **Deliverability:** daily send limit, proper Gmail threading, dedupe on
+  provider message ids.
+- **Isolation:** every query scopes by `tenantId`.
+
+## Not implemented yet (by design)
+
+Missed-call text-back, full two-way SMS threading polish, CRM integrations,
+advanced sequences/analytics.
+
+## Layout
+
+```
+app/            pages + API routes (App Router)
+  api/          auth, gmail oauth+poll, inbound email, twilio, cron, leads, messages
+  dashboard/    overview, leads, review queue, settings, test tools
+components/     client components (forms, draft cards, sidebar)
+lib/            ai, gmail, twilio, outbound, ingest, replies, tasks, lead-parse
+prisma/         schema, migrations, seed
+```
