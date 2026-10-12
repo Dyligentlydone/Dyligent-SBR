@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { HoloLogo } from "@/components/HoloLogo";
+import { RotatingHeadline } from "@/components/RotatingHeadline";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
@@ -14,17 +16,15 @@ export default async function Landing() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-2xl text-center">
-        <p className="mb-3">
-          <Logo height={30} />
-        </p>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Never lose another lead to a slow reply.
-        </h1>
+        <div className="mb-3">
+          <HoloLogo />
+        </div>
+        <RotatingHeadline />
         <p className="mx-auto mt-5 max-w-xl text-lg text-zinc-600">
-          The AI SDR for home services. When a new lead hits your inbox, Dyligent
-          waits 5 minutes, then texts and emails them like a human would —
-          follows up, answers basic questions, and hands off to you when it
-          matters.
+          In home services, missed opportunities become your competitors’
+          customers. Dyligent is your automated sales team, instantly
+          engaging new leads, building relationships, and following up
+          consistently until they’re ready to book.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
           <Link
@@ -40,18 +40,9 @@ export default async function Landing() {
             Sign in
           </Link>
         </div>
-        <div className="mx-auto mt-14 grid max-w-xl grid-cols-1 gap-4 text-left sm:grid-cols-3">
-          {[
-            ["5-minute response", "Every inbound lead gets a personal text + email within minutes."],
-            ["You stay in control", "AI drafts every message. You approve, or flip on auto-send."],
-            ["Built for the trades", "HVAC, plumbing, electrical, roofing, remodeling and more."],
-          ].map(([title, body]) => (
-            <div key={title} className="rounded-xl border border-zinc-200 bg-white p-4">
-              <p className="font-semibold">{title}</p>
-              <p className="mt-1 text-sm text-zinc-600">{body}</p>
-            </div>
-          ))}
-        </div>
+      </div>
+      <div className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2">
+        <Logo height={26} />
       </div>
     </main>
   );

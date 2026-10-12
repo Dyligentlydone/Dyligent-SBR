@@ -34,3 +34,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+@keyframes headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
