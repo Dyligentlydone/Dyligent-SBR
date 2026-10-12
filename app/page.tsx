@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
@@ -13,8 +14,8 @@ export default async function Landing() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-2xl text-center">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-teal-700">
-          Dyligent SDR
+        <p className="mb-3">
+          <Logo height={30} />
         </p>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Never lose another lead to a slow reply.

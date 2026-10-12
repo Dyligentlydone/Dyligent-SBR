@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { Logo } from "@/components/Logo";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -18,7 +19,7 @@ export function Sidebar({ tenantName, draftCount }: { tenantName: string; draftC
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-5 py-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-teal-700">Dyligent SDR</p>
+        <Logo height={18} />
         <p className="mt-0.5 truncate text-sm font-medium text-zinc-800">{tenantName}</p>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">

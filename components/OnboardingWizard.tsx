@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { ForwardingGuide } from "@/components/ForwardingGuide";
 
 const inputCls =
@@ -120,6 +121,12 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
 
       {step === 0 && (
         <div className="space-y-4">
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-xs text-zinc-400 hover:text-zinc-600"
+          >
+            ← Sign out / use a different account
+          </button>
           <p className="text-sm text-zinc-600">
             Point us at your online presence. We&apos;ll scan it to train your new SDR Manager
             about your services, service area, and what customers love about you.
