@@ -101,6 +101,10 @@ model Tenant {
   dailySendLimit    Int     @default(100)
   // Unique forwarding address token → lead+<token>@<inbound-domain>
   forwardingToken String  @unique @default(cuid())
+  // Google sends a confirmation code to our inbound address when the owner
+  // adds it in Gmail → Settings → Forwarding. Captured and surfaced in-app.
+  forwardingVerifyCode String?
+  forwardingVerifyUrl  String?
   onboardingComplete Boolean @default(false)
   // Billing: free until `freeBookingLimit` confirmed bookings OR `trialEndsAt`.
   // subscriptionStatus: TRIAL | ACTIVE | PAUSED | PAST_DUE | CANCELLED

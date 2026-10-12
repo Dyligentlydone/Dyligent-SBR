@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ForwardingGuide } from "@/components/ForwardingGuide";
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
@@ -268,10 +269,10 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <p className="font-semibold">Option B — Forward leads to us</p>
-            <p className="mt-1 text-sm text-zinc-600">
-              Forward lead-notification emails (or set an auto-forward rule) to:
+            <p className="mb-3 mt-1 text-sm text-zinc-600">
+              Works with any inbox or website form — pick your setup:
             </p>
-            <code className="mt-2 block rounded-lg bg-zinc-100 px-3 py-2 text-sm">{forwarding ?? "…"}</code>
+            {forwarding && <ForwardingGuide address={forwarding} />}
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <p className="font-semibold">Payment — optional</p>

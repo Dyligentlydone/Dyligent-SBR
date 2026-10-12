@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ForwardingGuide } from "@/components/ForwardingGuide";
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
@@ -418,10 +419,10 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
 
           <div className="rounded-lg border border-zinc-100 p-4">
             <p className="text-sm font-medium">Email forwarding</p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Auto-forward lead-notification emails to this address — works with any inbox:
+            <p className="mb-3 mt-0.5 text-xs text-zinc-500">
+              Get leads into Dyligent without connecting an inbox — pick your setup:
             </p>
-            <code className="mt-2 block rounded-lg bg-zinc-100 px-3 py-2 text-sm">{forwardingAddress}</code>
+            <ForwardingGuide address={forwardingAddress} />
           </div>
 
           {/* Send as your own domain — for tenants without Gmail */}

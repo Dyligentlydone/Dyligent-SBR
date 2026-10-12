@@ -68,6 +68,19 @@ export async function POST(req: Request) {
     const tenant = await db.tenant.findUnique({ where: { forwardingToken: token } });
     if (!tenant) return NextResponse.json({ error: "unknown forwarding address" }, { status: 404 });
 
+    // Gmail sends a confirmation code HERE when the owner adds this address in
+    // Gmail → Settings → Forwarding. Capture it so the UI can display it —
+    // this is what makes forwarding setup self-serve.
+    if (/forwarding-noreply@google\.com/i.test(inbound.from)) {
+      const code = (inbound.text ?? "").match(/confirmation code[:\s]+(\d{6,9})/i)?.[1];
+      const url = (inbound.text ?? "").match(/https:\/\/mail-settings\.google\.com\/\S+/i)?.[0];
+      await db.tenant.update({
+        where: { id: tenant.id },
+        data: { forwardingVerifyCode: code, forwardingVerifyUrl: url },
+      });
+      return NextResponse.json({ ok: true, forwardingConfirmation: true });
+    }
+
     const result = await ingestInboundEmail(tenant.id, {
       from: inbound.from,
       subject: inbound.subject,
