@@ -26,7 +26,7 @@ export default async function SettingsPage({
     <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold">Settings</h1>
       {gmailFlash === "connected" && (
-        <p className="mt-3 rounded-lg bg-teal-50 px-4 py-2 text-sm text-teal-800">
+        <p className="mt-3 rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-800">
           Gmail connected successfully.
         </p>
       )}

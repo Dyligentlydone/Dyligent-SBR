@@ -31,8 +31,8 @@ export function BillingBanner({ billing }: { billing: BillingStatus }) {
   // FREE tier still running
   if (billing.bookingsUsed > 0 || billing.daysLeft <= 14) {
     return (
-      <div className="mb-6 flex items-center justify-between rounded-xl border border-teal-100 bg-teal-50 px-4 py-3">
-        <p className="text-sm text-teal-900">
+      <div className="mb-6 flex items-center justify-between rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+        <p className="text-sm text-brand-900">
           <span className="font-semibold">Free plan</span> —{" "}
           {billing.bookingsUsed}/{billing.bookingsLimit} bookings used ·{" "}
           {billing.daysLeft} day{billing.daysLeft === 1 ? "" : "s"} left.
@@ -43,7 +43,7 @@ export function BillingBanner({ billing }: { billing: BillingStatus }) {
         {!billing.cardOnFile && (
           <Link
             href="/dashboard/settings"
-            className="shrink-0 rounded-lg border border-teal-600 px-4 py-1.5 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+            className="shrink-0 rounded-lg border border-brand-600 px-4 py-1.5 text-sm font-semibold text-brand-800 hover:bg-brand-100"
           >
             Add card
           </Link>

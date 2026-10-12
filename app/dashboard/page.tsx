@@ -86,7 +86,7 @@ export default async function DashboardPage() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
               Recent leads
             </h2>
-            <Link href="/dashboard/leads" className="text-sm font-medium text-teal-700 hover:underline">
+            <Link href="/dashboard/leads" className="text-sm font-medium text-accent-600 hover:underline">
               View all
             </Link>
           </div>
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
             {leads.length === 0 && (
               <p className="px-4 py-8 text-center text-sm text-zinc-500">
                 No leads yet — connect Gmail or set up forwarding in{" "}
-                <Link href="/dashboard/settings" className="text-teal-700 underline">
+                <Link href="/dashboard/settings" className="text-accent-600 underline">
                   Settings
                 </Link>
                 .

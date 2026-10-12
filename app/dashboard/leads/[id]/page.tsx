@@ -78,7 +78,7 @@ export default async function LeadDetailPage({
                     ? "border-zinc-200 bg-white"
                     : m.status === "DRAFT"
                       ? "border-amber-300 bg-amber-50"
-                      : "border-teal-100 bg-teal-50"
+                      : "border-brand-100 bg-brand-50"
                 }`}
               >
                 <div className="flex items-center justify-between text-xs text-zinc-500">

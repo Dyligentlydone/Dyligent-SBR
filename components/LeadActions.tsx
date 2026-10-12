@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
 
 const STATUSES = [
   "NEW", "OUTREACH_SCHEDULED", "CONTACTED", "RESPONDED",
@@ -116,7 +116,7 @@ export function LeadActions({
           {hasPhone && (
             <button
               onClick={() => setChannel("SMS")}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${channel === "SMS" ? "bg-teal-700 text-white" : "bg-zinc-100"}`}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${channel === "SMS" ? "bg-brand-700 text-white" : "bg-zinc-100"}`}
             >
               SMS
             </button>
@@ -124,7 +124,7 @@ export function LeadActions({
           {hasEmail && (
             <button
               onClick={() => setChannel("EMAIL")}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${channel === "EMAIL" ? "bg-teal-700 text-white" : "bg-zinc-100"}`}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${channel === "EMAIL" ? "bg-brand-700 text-white" : "bg-zinc-100"}`}
             >
               Email
             </button>
@@ -142,7 +142,7 @@ export function LeadActions({
           onClick={async () => {
             if (await call(`/api/leads/${leadId}/reply`, { channel, body })) setBody("");
           }}
-          className="mt-2 w-full rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+          className="mt-2 w-full rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
         >
           Send reply
         </button>

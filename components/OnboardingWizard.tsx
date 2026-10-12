@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { ForwardingGuide } from "@/components/ForwardingGuide";
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
 const labelCls = "mb-1 block text-sm font-medium";
 
 export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabled: boolean; stripeEnabled: boolean }) {
@@ -113,7 +113,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
       <div className="mb-8 flex gap-2">
         {["Online presence", "Your business", "Booking & rules", "Connect email"].map((s, i) => (
           <div key={s} className="flex-1">
-            <div className={`h-1.5 rounded-full ${i <= step ? "bg-teal-600" : "bg-zinc-200"}`} />
+            <div className={`h-1.5 rounded-full ${i <= step ? "bg-brand-600" : "bg-zinc-200"}`} />
             <p className="mt-1.5 text-xs text-zinc-500">{s}</p>
           </div>
         ))}
@@ -151,7 +151,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
           <button
             onClick={scan}
             disabled={scanning || (!data.websiteUrl.trim() && !data.googleBusinessUrl.trim())}
-            className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+            className="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
           >
             {scanning ? "Scanning your business…" : "Scan & prefill"}
           </button>
@@ -161,7 +161,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
       {step === 1 && (
         <div className="space-y-4">
           {scanNote && (
-            <p className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">{scanNote}</p>
+            <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{scanNote}</p>
           )}
           <div>
             <label className={labelCls}>Business name</label>
@@ -191,7 +191,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
           </div>
           <button
             onClick={() => data.name.trim() ? setStep(2) : setError("Business name is required")}
-            className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+            className="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
           >
             Continue
           </button>
@@ -241,7 +241,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
             <button
               onClick={submit}
               disabled={loading}
-              className="flex-1 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+              className="flex-1 rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
             >
               {loading ? "Saving…" : "Continue"}
             </button>
@@ -264,7 +264,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
               href={googleEnabled ? "/api/gmail/connect" : undefined}
               className={`mt-3 inline-block rounded-lg px-4 py-2 text-sm font-semibold ${
                 googleEnabled
-                  ? "bg-teal-700 text-white hover:bg-teal-800"
+                  ? "bg-brand-700 text-white hover:bg-brand-800"
                   : "cursor-not-allowed bg-zinc-100 text-zinc-400"
               }`}
             >
@@ -291,7 +291,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
               <button
                 onClick={addCard}
                 disabled={cardBusy}
-                className="mt-3 rounded-lg border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+                className="mt-3 rounded-lg border border-brand-700 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60"
               >
                 {cardBusy ? "Opening secure checkout…" : "Add a card (optional)"}
               </button>
@@ -301,7 +301,7 @@ export function OnboardingWizard({ googleEnabled, stripeEnabled }: { googleEnabl
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+            className="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
           >
             Go to dashboard
           </button>

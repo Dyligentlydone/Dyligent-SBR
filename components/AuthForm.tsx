@@ -53,7 +53,7 @@ export function AuthForm({ mode, googleEnabled }: { mode: "login" | "signup"; go
               name="name"
               required
               autoComplete="name"
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
             />
           </div>
         )}
@@ -64,7 +64,7 @@ export function AuthForm({ mode, googleEnabled }: { mode: "login" | "signup"; go
             type="email"
             required
             autoComplete="email"
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
           />
         </div>
         <div>
@@ -75,7 +75,7 @@ export function AuthForm({ mode, googleEnabled }: { mode: "login" | "signup"; go
             required
             minLength={mode === "signup" ? 8 : 1}
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
           />
           {mode === "signup" && (
             <p className="mt-1 text-xs text-zinc-500">At least 8 characters.</p>
@@ -85,7 +85,7 @@ export function AuthForm({ mode, googleEnabled }: { mode: "login" | "signup"; go
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+          className="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
         >
           {loading ? "One moment…" : mode === "login" ? "Sign in" : "Create account"}
         </button>

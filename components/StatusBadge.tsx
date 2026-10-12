@@ -2,7 +2,7 @@ const STYLES: Record<string, string> = {
   NEW: "bg-zinc-100 text-zinc-700",
   OUTREACH_SCHEDULED: "bg-blue-50 text-blue-700",
   CONTACTED: "bg-indigo-50 text-indigo-700",
-  RESPONDED: "bg-teal-50 text-teal-800",
+  RESPONDED: "bg-brand-50 text-brand-800",
   NEEDS_REVIEW: "bg-amber-100 text-amber-800",
   BOOKED: "bg-green-100 text-green-800",
   HANDED_OFF: "bg-purple-100 text-purple-800",

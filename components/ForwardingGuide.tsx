@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 function Step({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <li className="flex gap-2.5 text-sm text-zinc-700">
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
         {n}
       </span>
       <span>{children}</span>
@@ -106,13 +106,13 @@ export function ForwardingGuide({ address }: { address: string }) {
           Google emails a confirmation code <em>to us</em> — it shows up here automatically:
           <div className="mt-2 rounded-lg bg-zinc-100 px-3 py-2 text-center">
             {code ? (
-              <span className="font-mono text-lg font-bold tracking-widest text-teal-800">{code}</span>
+              <span className="font-mono text-lg font-bold tracking-widest text-brand-800">{code}</span>
             ) : (
               <span className="text-xs text-zinc-500">Waiting for Google&apos;s confirmation email…</span>
             )}
           </div>
           {verifyUrl && (
-            <a href={verifyUrl} target="_blank" className="mt-1 block text-xs text-teal-700 underline">
+            <a href={verifyUrl} target="_blank" className="mt-1 block text-xs text-accent-600 underline">
               Or click here to confirm while signed into your Gmail
             </a>
           )}

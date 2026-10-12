@@ -23,7 +23,7 @@ export default async function ReviewPage() {
         {!ctx.tenant.autoSend && (
           <p className="text-sm text-zinc-500">
             Drafts wait for your approval —{" "}
-            <Link href="/dashboard/settings" className="text-teal-700 underline">
+            <Link href="/dashboard/settings" className="text-accent-600 underline">
               enable auto-send
             </Link>{" "}
             when ready.

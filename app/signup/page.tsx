@@ -22,7 +22,7 @@ export default async function SignupPage() {
         <AuthForm mode="signup" googleEnabled={env.googleConfigured} />
         <p className="mt-6 text-sm text-zinc-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-teal-700 hover:underline">
+          <Link href="/login" className="font-medium text-accent-600 hover:underline">
             Sign in
           </Link>
         </p>

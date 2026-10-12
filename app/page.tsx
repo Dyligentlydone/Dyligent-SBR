@@ -29,7 +29,7 @@ export default async function Landing() {
         <div className="mt-8 flex items-center justify-center gap-4">
           <Link
             href="/signup"
-            className="rounded-lg bg-teal-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-teal-800"
+            className="rounded-lg bg-brand-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-800"
           >
             Get started free
           </Link>

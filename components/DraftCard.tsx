@@ -51,7 +51,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
     <div className="rounded-xl border border-zinc-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <div className="text-sm">
-          <Link href={`/dashboard/leads/${draft.leadId}`} className="font-semibold text-teal-700 hover:underline">
+          <Link href={`/dashboard/leads/${draft.leadId}`} className="font-semibold text-accent-600 hover:underline">
             {draft.leadName}
           </Link>
           <span className="ml-2 text-zinc-500">
@@ -70,7 +70,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
       {draft.channel === "EMAIL" &&
         (editing ? (
           <input
-            className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-teal-600 focus:outline-none"
+            className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-brand-600 focus:outline-none"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject"
@@ -81,7 +81,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
 
       {editing ? (
         <textarea
-          className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
           rows={draft.channel === "SMS" ? 3 : 6}
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -96,7 +96,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
         <button
           disabled={busy !== null}
           onClick={() => act("approve")}
-          className="rounded-lg bg-teal-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+          className="rounded-lg bg-brand-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
         >
           {busy === "approve" ? "Sending…" : dirty ? "Send edited" : "Approve & send"}
         </button>

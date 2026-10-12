@@ -33,7 +33,7 @@ export default async function LeadsPage({
             href={f ? `/dashboard/leads?status=${f}` : "/dashboard/leads"}
             className={`rounded-full px-3 py-1 text-xs font-medium ${
               (status ?? "") === f
-                ? "bg-teal-700 text-white"
+                ? "bg-brand-700 text-white"
                 : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
             }`}
           >
@@ -46,7 +46,7 @@ export default async function LeadsPage({
         {leads.length === 0 && (
           <p className="px-4 py-12 text-center text-sm text-zinc-500">
             No leads here yet — connect Gmail or set up forwarding in{" "}
-            <Link href="/dashboard/settings" className="text-teal-700 underline">
+            <Link href="/dashboard/settings" className="text-accent-600 underline">
               Settings
             </Link>
             .

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ForwardingGuide } from "@/components/ForwardingGuide";
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
 const labelCls = "mb-1 block text-sm font-medium";
 
 interface Props {
@@ -230,14 +230,14 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
           <button
             onClick={rescan}
             disabled={scanning || (!form.websiteUrl.trim() && !form.googleBusinessUrl.trim())}
-            className="rounded-lg border border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+            className="rounded-lg border border-brand-700 px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60"
           >
             {scanning ? "Scanning…" : "Re-scan online presence"}
           </button>
           {tenant.businessProfile && (
             <span className="text-xs text-zinc-500">AI has learned {tenant.businessProfile.length} chars of intel from your site</span>
           )}
-          {scanMsg && <span className="text-xs text-teal-700">{scanMsg}</span>}
+          {scanMsg && <span className="text-xs text-brand-700">{scanMsg}</span>}
         </div>
       </section>
 
@@ -279,7 +279,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
       </section>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <button onClick={() => save()} className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800">
+      <button onClick={() => save()} className="rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
         {saved ? "Saved ✓" : "Save settings"}
       </button>
 
@@ -299,7 +299,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
             <div className="mt-3 flex items-center gap-3">
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
                 <div
-                  className="h-full rounded-full bg-teal-600"
+                  className="h-full rounded-full bg-brand-600"
                   style={{ width: `${(billing.bookingsUsed / billing.bookingsLimit) * 100}%` }}
                 />
               </div>
@@ -312,13 +312,13 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 <button
                   disabled={billingBusy}
                   onClick={() => billingAction("/api/billing/session", { mode: "setup" })}
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
                 >
                   Add a card — no charge yet
                 </button>
               )}
               {billing.cardOnFile && (
-                <p className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">
+                <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
                   Card on file ✓ — billing starts only when your free tier ends.
                 </p>
               )}
@@ -340,7 +340,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 <button
                   disabled={billingBusy}
                   onClick={() => billingAction("/api/billing/session", { mode: "subscription" })}
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
                 >
                   Subscribe — ${monthlyPrice}/mo
                 </button>
@@ -354,7 +354,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
         {billing.effective === "ACTIVE" && (
           <div className="mt-1 flex items-center justify-between">
             <p className="text-sm text-zinc-600">
-              <strong className="text-teal-700">Subscribed</strong> — ${monthlyPrice}/mo, cancel anytime.
+              <strong className="text-brand-700">Subscribed</strong> — ${monthlyPrice}/mo, cancel anytime.
             </p>
             {billing.stripeConfigured && (
               <button
@@ -407,7 +407,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                   </button>
                 </>
               ) : googleEnabled ? (
-                <a href="/api/gmail/connect" className="rounded-lg bg-teal-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-teal-800">
+                <a href="/api/gmail/connect" className="rounded-lg bg-brand-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-800">
                   Connect
                 </a>
               ) : (
@@ -439,19 +439,19 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
             {!sendingDomain && resendConfigured && (
               <div className="mt-3 flex flex-wrap gap-2">
                 <input
-                  className="w-48 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  className="w-48 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
                   placeholder="yourdomain.com"
                   value={domainForm.domain}
                   onChange={(e) => setDomainForm((f) => ({ ...f, domain: e.target.value }))}
                 />
                 <input
-                  className="w-36 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  className="w-36 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
                   placeholder="from (e.g. team)"
                   value={domainForm.fromLocal}
                   onChange={(e) => setDomainForm((f) => ({ ...f, fromLocal: e.target.value }))}
                 />
                 <input
-                  className="w-56 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  className="w-56 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
                   placeholder="replies go to (you@yourdomain.com)"
                   value={domainForm.replyTo}
                   onChange={(e) => setDomainForm((f) => ({ ...f, replyTo: e.target.value }))}
@@ -459,7 +459,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 <button
                   disabled={domainBusy || !domainForm.domain || !domainForm.replyTo}
                   onClick={() => domainAction("POST")}
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
                 >
                   {domainBusy ? "Adding…" : "Register domain"}
                 </button>
@@ -512,7 +512,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                     <button
                       disabled={domainBusy}
                       onClick={() => domainAction("PUT")}
-                      className="rounded-lg bg-teal-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                      className="rounded-lg bg-brand-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
                     >
                       {domainBusy ? "Checking…" : "Verify DNS"}
                     </button>
@@ -544,7 +544,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
             ) : (
               <div className="mt-3 flex gap-2">
                 <input
-                  className="w-32 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                  className="w-32 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
                   placeholder="Area code"
                   maxLength={3}
                   value={areaCode}
@@ -553,7 +553,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 <button
                   onClick={provision}
                   disabled={provisioning}
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
                 >
                   {provisioning ? "Provisioning…" : "Get a number"}
                 </button>

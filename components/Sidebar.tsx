@@ -31,7 +31,7 @@ export function Sidebar({ tenantName, draftCount }: { tenantName: string; draftC
               key={item.href}
               href={item.href}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
-                active ? "bg-teal-50 text-teal-800" : "text-zinc-600 hover:bg-zinc-50"
+                active ? "bg-brand-50 text-brand-800" : "text-zinc-600 hover:bg-zinc-50"
               }`}
             >
               {item.label}
