@@ -1,10 +1,18 @@
-import twilio from "twilio";
+import twilio, { type Twilio } from "twilio";
 import { env } from "@/lib/env";
 import { db } from "@/lib/db";
 import type { TwilioConnection } from "@prisma/client";
 
 function client() {
   return twilio(env.twilioSid, env.twilioToken);
+}
+
+/** Per-tenant client: subaccount creds if provisioned, else master account. */
+function tenantClient(conn: TwilioConnection): Twilio {
+  if (conn.subAccountSid && conn.subAuthToken) {
+    return twilio(conn.subAccountSid, conn.subAuthToken);
+  }
+  return client();
 }
 
 /** Send an SMS from the tenant's provisioned number. */
@@ -17,7 +25,7 @@ export async function sendSms(params: {
     // Demo mode — no real SMS leaves the building.
     return { sid: `sim_${crypto.randomUUID()}`, simulated: true };
   }
-  const res = await client().messages.create({
+  const res = await tenantClient(params.conn).messages.create({
     from: params.conn.phoneNumber,
     to: params.to,
     body: params.body,
@@ -26,9 +34,12 @@ export async function sendSms(params: {
 }
 
 /**
- * Search for and buy a local number for the tenant, and wire its SMS webhook
- * to /api/webhooks/twilio. Without credentials we fabricate a demo number so
- * the onboarding flow is still testable.
+ * ISV-style provisioning: create a Twilio subaccount for the tenant, buy a
+ * local number inside it, and wire the SMS webhook back to us. Each tenant
+ * gets isolated billing, rate limits, and compliance scope — and we can see
+ * exactly what they cost us via the Usage API.
+ *
+ * Without credentials we fabricate a demo number so onboarding stays testable.
  */
 export async function provisionNumber(
   tenantId: string,
@@ -44,7 +55,24 @@ export async function provisionNumber(
     return { phoneNumber: fake, sid: "simulated", simulated: true };
   }
 
-  const tw = client();
+  const existing = await db.twilioConnection.findUnique({ where: { tenantId } });
+
+  // Reuse the tenant's subaccount on re-provision; create it otherwise.
+  let subSid = existing?.subAccountSid ?? null;
+  let subToken = existing?.subAuthToken ?? null;
+  if (!subSid || !subToken) {
+    const tenant = await db.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+    const sub = await client().api.accounts.create({
+      friendlyName: `dyligent:${tenant.name} (${tenantId})`,
+    });
+    subSid = sub.sid;
+    subToken = sub.authToken;
+  }
+
+  const tw = twilio(subSid, subToken);
   const available = await tw.availablePhoneNumbers("US").local.list({
     areaCode: areaCode ? Number(areaCode) : undefined,
     smsEnabled: true,
@@ -60,8 +88,19 @@ export async function provisionNumber(
 
   await db.twilioConnection.upsert({
     where: { tenantId },
-    update: { phoneNumber: purchased.phoneNumber, phoneSid: purchased.sid },
-    create: { tenantId, phoneNumber: purchased.phoneNumber, phoneSid: purchased.sid },
+    update: {
+      phoneNumber: purchased.phoneNumber,
+      phoneSid: purchased.sid,
+      subAccountSid: subSid,
+      subAuthToken: subToken,
+    },
+    create: {
+      tenantId,
+      phoneNumber: purchased.phoneNumber,
+      phoneSid: purchased.sid,
+      subAccountSid: subSid,
+      subAuthToken: subToken,
+    },
   });
   return { phoneNumber: purchased.phoneNumber, sid: purchased.sid, simulated: false };
 }

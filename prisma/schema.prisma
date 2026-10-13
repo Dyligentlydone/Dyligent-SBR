@@ -155,11 +155,13 @@ model GmailConnection {
 }
 
 model TwilioConnection {
-  id          String  @id @default(cuid())
-  tenantId    String  @unique
-  phoneNumber String
-  phoneSid    String?
-  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  tenantId      String  @unique
+  phoneNumber   String
+  phoneSid      String?
+  subAccountSid String? // tenant's own Twilio subaccount — ISV isolation
+  subAuthToken  String?
+  tenant        Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 // Verified sending domain — lets non-Gmail tenants send "from" their own
