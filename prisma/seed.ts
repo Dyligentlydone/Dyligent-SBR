@@ -23,6 +23,7 @@ async function main() {
       await db.tenant.create({
         data: {
           name: "Reliable Air Heating & Cooling",
+          websiteUrl: "https://www.reliableairatx.com",
           services: "AC repair, furnace installs, seasonal maintenance",
           serviceArea: "Austin metro",
           avgJobValue: "$4,200",
