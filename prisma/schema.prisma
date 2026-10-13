@@ -161,6 +161,8 @@ model TwilioConnection {
   phoneSid      String?
   subAccountSid String? // tenant's own Twilio subaccount — ISV isolation
   subAuthToken  String?
+  verificationSid    String? // toll-free verification submission
+  verificationStatus String? // PENDING_REVIEW | APPROVED | REJECTED
   tenant        Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 

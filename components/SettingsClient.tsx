@@ -65,7 +65,7 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
-  const [areaCode, setAreaCode] = useState("");
+  const [releasing, setReleasing] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const [domainForm, setDomainForm] = useState({ domain: "", fromLocal: "hello", replyTo: "" });
@@ -150,15 +150,22 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
   async function provision() {
     setProvisioning(true);
     setError(null);
-    const res = await fetch("/api/twilio/provision", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ areaCode: areaCode || undefined }),
-    });
+    const res = await fetch("/api/twilio/provision", { method: "POST" });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) setError(j.error ?? "Provisioning failed");
     router.refresh();
     setProvisioning(false);
+  }
+
+  async function release() {
+    if (!confirm("Release this number? Outbound SMS will stop and the number can't be recovered.")) return;
+    setReleasing(true);
+    setError(null);
+    const res = await fetch("/api/twilio/release", { method: "POST" });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.errors?.length) setError(j.errors?.join("; ") ?? j.error ?? "Release failed");
+    router.refresh();
+    setReleasing(false);
   }
 
   async function disconnectGmail() {
@@ -540,16 +547,18 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 : "Each business gets its own number so replies come back to your account."}
             </p>
             {twilioNumber ? (
-              <p className="mt-2 font-mono text-sm">{twilioNumber}</p>
+              <div className="mt-2 flex items-center gap-3">
+                <p className="font-mono text-sm">{twilioNumber}</p>
+                <button
+                  onClick={release}
+                  disabled={releasing}
+                  className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
+                >
+                  {releasing ? "Releasing…" : "Release number"}
+                </button>
+              </div>
             ) : (
-              <div className="mt-3 flex gap-2">
-                <input
-                  className="w-32 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
-                  placeholder="Area code"
-                  maxLength={3}
-                  value={areaCode}
-                  onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, ""))}
-                />
+              <div className="mt-3">
                 <button
                   onClick={provision}
                   disabled={provisioning}
@@ -557,6 +566,9 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 >
                   {provisioning ? "Provisioning…" : "Get a number"}
                 </button>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  Toll-free number — carrier verification is submitted automatically.
+                </p>
               </div>
             )}
           </div>
