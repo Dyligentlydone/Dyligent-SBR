@@ -41,9 +41,17 @@ interface Props {
   resendConfigured: boolean;
   isDev: boolean;
   monthlyPrice: number;
+  playbook: { id: string; kind: string; summary: string; createdAt: string }[];
 }
 
-export function SettingsClient({ tenant, gmailEmail, twilioNumber, twilioVerification, googleEnabled, forwardingAddress, billing, sendingDomain, resendConfigured, isDev, monthlyPrice }: Props) {
+const KIND_LABEL: Record<string, { label: string; cls: string }> = {
+  WIN: { label: "won", cls: "bg-emerald-100 text-emerald-800" },
+  LOSS: { label: "lost", cls: "bg-zinc-200 text-zinc-700" },
+  STYLE_EDIT: { label: "your style", cls: "bg-brand-100 text-brand-800" },
+  DRAFT_REJECTED: { label: "rejected", cls: "bg-amber-100 text-amber-800" },
+};
+
+export function SettingsClient({ tenant, gmailEmail, twilioNumber, twilioVerification, googleEnabled, forwardingAddress, billing, sendingDomain, resendConfigured, isDev, monthlyPrice, playbook }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: tenant.name,
@@ -247,6 +255,43 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, twilioVerific
           )}
           {scanMsg && <span className="text-xs text-brand-700">{scanMsg}</span>}
         </div>
+      </section>
+
+      {/* ── Learned playbook ── */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 className="font-semibold">What your AI has learned</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Lessons distilled from booked jobs, lost leads, and your edits to drafts — applied to every future message.
+        </p>
+        {playbook.length === 0 ? (
+          <p className="mt-3 text-sm text-zinc-400">
+            Nothing yet. It learns when you edit or reject a draft, and when a lead gets marked booked or closed.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {playbook.map((e) => {
+              const badge = KIND_LABEL[e.kind] ?? KIND_LABEL.LOSS;
+              return (
+                <li key={e.id} className="flex items-start gap-2 rounded-lg border border-zinc-100 px-3 py-2">
+                  <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badge.cls}`}>
+                    {badge.label}
+                  </span>
+                  <span className="min-w-0 flex-1 text-sm text-zinc-700">{e.summary}</span>
+                  <button
+                    onClick={async () => {
+                      await fetch(`/api/playbook/${e.id}`, { method: "DELETE" });
+                      router.refresh();
+                    }}
+                    className="shrink-0 text-xs text-zinc-400 hover:text-red-600"
+                    title="Delete this lesson"
+                  >
+                    ✕
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       {/* ── Behavior ── */}

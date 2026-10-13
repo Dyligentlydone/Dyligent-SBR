@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireTenant } from "@/lib/tenant";
 import { logActivity } from "@/lib/activity";
 import { onBookingConfirmed, onBookingRevoked } from "@/lib/billing";
+import { learnFromOutcome } from "@/lib/learn";
 
 const VALID_STATUSES = [
   "NEW", "OUTREACH_SCHEDULED", "CONTACTED", "RESPONDED",
@@ -35,6 +36,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
   if (toBooked) await onBookingConfirmed(tenant.id, id);
   if (fromBooked) await onBookingRevoked(tenant.id, id);
+
+  // Terminal outcomes teach the playbook — fire-and-forget distillation.
+  if (toBooked) learnFromOutcome(tenant.id, id, "WIN").catch(() => {});
+  if (next === "CLOSED") learnFromOutcome(tenant.id, id, "LOSS").catch(() => {});
 
   await logActivity(
     tenant.id,

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "@/lib/env";
+import { db } from "@/lib/db";
 import type { Lead, Tenant, Message } from "@prisma/client";
 
 // ── Public types ─────────────────────────────────────────────────────────────
@@ -37,7 +38,7 @@ const TONE_GUIDE: Record<string, string> = {
   casual: "relaxed and informal, short sentences, no corporate speak",
 };
 
-function companyContext(tenant: Tenant): string {
+async function companyContext(tenant: Tenant): Promise<string> {
   const lines = [
     `Company: ${tenant.name}`,
     `Services: ${tenant.services || "general home services"}`,
@@ -50,6 +51,28 @@ function companyContext(tenant: Tenant): string {
   if (tenant.extraContext) lines.push(`Additional context: ${tenant.extraContext}`);
   if (tenant.businessProfile)
     lines.push(`\nIntel learned from the business's own website/online presence:\n${tenant.businessProfile.slice(0, 6000)}`);
+
+  // Inject lessons learned from past conversations — the agent's playbook.
+  const playbook = await db.playbookEntry.findMany({
+    where: { tenantId: tenant.id },
+    orderBy: { createdAt: "desc" },
+    take: 40,
+  });
+  const lessons = playbook.filter((e) => e.kind === "WIN" || e.kind === "LOSS").slice(0, 10);
+  const edits = playbook.filter((e) => e.kind === "STYLE_EDIT").slice(0, 5);
+  const rejects = playbook.filter((e) => e.kind === "DRAFT_REJECTED").slice(0, 3);
+  if (lessons.length)
+    lines.push(
+      `\nPlaybook — lessons learned from this business's past conversations (apply when relevant):\n${lessons.map((e) => `- ${e.summary}`).join("\n")}`,
+    );
+  if (edits.length)
+    lines.push(
+      `\nThe owner's voice — corrections they made to past drafts (match this style):\n${edits.map((e) => `- ${e.summary}`).join("\n")}`,
+    );
+  if (rejects.length)
+    lines.push(
+      `\nDrafts the owner rejected — avoid this style:\n${rejects.map((e) => `- ${e.summary}`).join("\n")}`,
+    );
   return lines.join("\n");
 }
 
@@ -103,7 +126,7 @@ function leadContext(lead: Lead): string {
 
 // ── Claude call with JSON parsing ────────────────────────────────────────────
 
-async function askClaude<T>(
+export async function askClaude<T>(
   system: string,
   user: string,
   fallback: () => T,
@@ -144,7 +167,7 @@ export async function draftInitialOutreach(
       : "Just reply here and we'll get you scheduled.";
 
   const { result, aiGenerated } = await askClaude<InitialOutreach>(
-    `You are an AI sales-development rep for a home services business. Write the FIRST outreach to a brand-new inbound lead. It goes out ~5 minutes after they submitted an inquiry.\n\n${companyContext(tenant)}\n\n${GUARDRAILS}`,
+    `You are an AI sales-development rep for a home services business. Write the FIRST outreach to a brand-new inbound lead. It goes out ~5 minutes after they submitted an inquiry.\n\n${await companyContext(tenant)}\n\n${GUARDRAILS}`,
     `${leadContext(lead)}\n\nReturn JSON: {"sms": "...", "emailSubject": "...", "emailBody": "..."}`,
     () => ({
       sms: `Hi ${firstName}, this is ${tenant.name}. Thanks for reaching out about ${lead.summary ?? "your project"} — we'd love to help. ${booking}`,
@@ -181,7 +204,7 @@ export async function draftReply(
       : "ask when works for them";
 
   const { result, aiGenerated } = await askClaude<ReplyDraft>(
-    `You are an AI sales-development rep for a home services business, replying to a lead mid-conversation.\n\n${companyContext(tenant)}\n\nHANDOFF TRIGGERS — if any apply, set shouldHandoff=true and write a brief holding reply: ${DEFAULT_HANDOFF_TRIGGERS}. ${customRules}\nIf the lead confirms a booking/time, set markBooked=true and shouldHandoff=true.\n${GUARDRAILS}`,
+    `You are an AI sales-development rep for a home services business, replying to a lead mid-conversation.\n\n${await companyContext(tenant)}\n\nHANDOFF TRIGGERS — if any apply, set shouldHandoff=true and write a brief holding reply: ${DEFAULT_HANDOFF_TRIGGERS}. ${customRules}\nIf the lead confirms a booking/time, set markBooked=true and shouldHandoff=true.\n${GUARDRAILS}`,
     `${leadContext(lead)}\n\nRecent conversation:\n${transcript || "(none)"}\n\nNew inbound message from lead:\n${inbound}\n\nReturn JSON: {"sms": "...", "emailBody": "...", "intent": "READY_TO_BOOK|QUESTION|PRICING|ANGRY|SPAM|OTHER", "shouldHandoff": bool, "handoffReason": "...", "markBooked": bool}. To move them toward booking, ${booking}.`,
     () => fallbackReply(tenant, lead, inbound),
   );

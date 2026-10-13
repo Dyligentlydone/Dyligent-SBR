@@ -127,6 +127,7 @@ model Tenant {
   messages    Message[]
   tasks       ScheduledTask[]
   activities  ActivityLog[]
+  playbook    PlaybookEntry[]
 }
 
 model Membership {
@@ -267,4 +268,20 @@ model ActivityLog {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt])
+}
+
+// A distilled lesson the agent learned for this tenant — injected into future
+// draft prompts so it gets better the longer it works for the business.
+model PlaybookEntry {
+  id        String   @id @default(cuid())
+  tenantId  String
+  kind      String // WIN | LOSS | STYLE_EDIT | DRAFT_REJECTED
+  summary   String   @db.Text // the lesson, phrased as instruction-ready prose
+  leadId    String?
+  messageId String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, kind])
 }

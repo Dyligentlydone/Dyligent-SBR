@@ -5,6 +5,7 @@ import { requireTenant } from "@/lib/tenant";
 import { sendSmsToLead, sendEmailToLead } from "@/lib/outbound";
 import { logActivity } from "@/lib/activity";
 import { canSend } from "@/lib/billing";
+import { captureStyleEdit, captureRejection } from "@/lib/learn";
 
 // Actions on a DRAFT message: approve (send as-is / with edits) or reject.
 
@@ -35,6 +36,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await logActivity(tenant.id, "DRAFT_REJECTED", `Draft ${message.channel.toLowerCase()} rejected`, {
       leadId: message.leadId,
     });
+    if (message.isAiGenerated)
+      await captureRejection(tenant.id, id, message.leadId, message.channel, message.body);
     return NextResponse.json({ ok: true });
   }
 
@@ -44,7 +47,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: gate.reason }, { status: 402 });
 
   // The draft row itself is updated to SENT/FAILED — no duplicate message.
-  const body = parsed.data.body?.trim() || message.body;
+  const edited = parsed.data.body?.trim();
+  const body = edited || message.body;
   const subject = parsed.data.subject?.trim() || message.subject || undefined;
 
   const sent =
@@ -74,5 +78,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   await logActivity(tenant.id, "DRAFT_APPROVED", `Approved + sent ${message.channel.toLowerCase()}`, {
     leadId: message.leadId,
   });
+  // Owner rewrote the AI's draft → capture the before/after as a style lesson.
+  if (message.isAiGenerated && edited && edited !== message.body)
+    await captureStyleEdit(tenant.id, id, message.leadId, message.channel, message.body, edited);
   return NextResponse.json({ ok: true });
 }

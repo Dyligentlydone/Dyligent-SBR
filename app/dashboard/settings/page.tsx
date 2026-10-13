@@ -16,10 +16,15 @@ export default async function SettingsPage({
   if (!ctx?.tenant) redirect("/onboarding");
   const { gmail: gmailFlash } = await searchParams;
 
-  const [gmail, twilio, sendingDomain] = await Promise.all([
+  const [gmail, twilio, sendingDomain, playbook] = await Promise.all([
     db.gmailConnection.findUnique({ where: { tenantId: ctx.tenant.id } }),
     db.twilioConnection.findUnique({ where: { tenantId: ctx.tenant.id } }),
     db.sendingDomain.findUnique({ where: { tenantId: ctx.tenant.id } }),
+    db.playbookEntry.findMany({
+      where: { tenantId: ctx.tenant.id },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+    }),
   ]);
 
   return (
@@ -61,6 +66,12 @@ export default async function SettingsPage({
           billing={getBillingStatus(ctx.tenant)}
           isDev={process.env.NODE_ENV === "development"}
           monthlyPrice={MONTHLY_PRICE_USD}
+          playbook={playbook.map((e) => ({
+            id: e.id,
+            kind: e.kind,
+            summary: e.summary,
+            createdAt: e.createdAt.toISOString(),
+          }))}
         />
       </div>
     </div>
