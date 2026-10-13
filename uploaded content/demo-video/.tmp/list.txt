@@ -1,0 +1,7 @@
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/01-landing.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/02-login.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/03-dashboard.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/04-leads.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/05-review-queue.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/06-settings.mp4'
+file '/Users/dyl/CascadeProjects/Dyligent SDR/uploaded content/demo-video/.tmp/card.mp4'

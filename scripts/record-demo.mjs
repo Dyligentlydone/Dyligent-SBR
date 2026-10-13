@@ -117,12 +117,18 @@ await scene("05-review-queue", async (p) => {
   await wheel(p, -300);
 });
 
-// 6 — settings: company profile, AI rules, forwarding guide, billing
+// 6 — settings: dwell on the learned-playbook panel (the differentiator),
+// then tour company profile, forwarding guide, billing
 await scene("06-settings", async (p) => {
   await p.goto(`${BASE}/dashboard/settings`);
-  await settle(p, 3000);
-  for (let i = 0; i < 5; i++) await wheel(p, 500);
-  for (let i = 0; i < 5; i++) await wheel(p, -500);
+  await settle(p, 2000);
+  await p
+    .locator("text=What your AI has learned")
+    .evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await settle(p, 4500); // VO lands the learning pitch over this panel
+  for (let i = 0; i < 4; i++) await wheel(p, 500);
+  for (let i = 0; i < 4; i++) await wheel(p, -500);
+  await settle(p, 1000);
 });
 
 console.log("done — clips in", OUT);
