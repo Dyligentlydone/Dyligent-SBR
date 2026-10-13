@@ -19,6 +19,7 @@ interface Props {
   };
   gmailEmail: string | null;
   twilioNumber: string | null;
+  twilioVerification: { status: string | null; url: string | null };
   googleEnabled: boolean;
   forwardingAddress: string;
   billing: {
@@ -42,7 +43,7 @@ interface Props {
   monthlyPrice: number;
 }
 
-export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled, forwardingAddress, billing, sendingDomain, resendConfigured, isDev, monthlyPrice }: Props) {
+export function SettingsClient({ tenant, gmailEmail, twilioNumber, twilioVerification, googleEnabled, forwardingAddress, billing, sendingDomain, resendConfigured, isDev, monthlyPrice }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: tenant.name,
@@ -547,15 +548,28 @@ export function SettingsClient({ tenant, gmailEmail, twilioNumber, googleEnabled
                 : "Each business gets its own number so replies come back to your account."}
             </p>
             {twilioNumber ? (
-              <div className="mt-2 flex items-center gap-3">
-                <p className="font-mono text-sm">{twilioNumber}</p>
-                <button
-                  onClick={release}
-                  disabled={releasing}
-                  className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
-                >
-                  {releasing ? "Releasing…" : "Release number"}
-                </button>
+              <div className="mt-2">
+                <div className="flex items-center gap-3">
+                  <p className="font-mono text-sm">{twilioNumber}</p>
+                  <button
+                    onClick={release}
+                    disabled={releasing}
+                    className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
+                  >
+                    {releasing ? "Releasing…" : "Release number"}
+                  </button>
+                </div>
+                {twilioVerification.status === "NEEDS_OWNER" && twilioVerification.url && (
+                  <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    Carrier verification needed to keep texts delivering.{" "}
+                    <a href={twilioVerification.url} target="_blank" rel="noreferrer" className="font-semibold underline">
+                      Complete verification →
+                    </a>
+                  </p>
+                )}
+                {twilioVerification.status === "PENDING_REVIEW" && (
+                  <p className="mt-2 text-xs text-zinc-500">Carrier verification under review — usually 2–5 business days.</p>
+                )}
               </div>
             ) : (
               <div className="mt-3">

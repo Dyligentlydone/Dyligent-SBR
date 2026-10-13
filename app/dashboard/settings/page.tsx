@@ -40,6 +40,10 @@ export default async function SettingsPage({
           tenant={ctx.tenant}
           gmailEmail={gmail?.email ?? null}
           twilioNumber={twilio?.phoneNumber ?? null}
+          twilioVerification={{
+            status: twilio?.verificationStatus ?? null,
+            url: twilio?.verificationUrl ?? null,
+          }}
           googleEnabled={env.googleConfigured}
           forwardingAddress={`lead+${ctx.tenant.forwardingToken}@${env.inboundDomain}`}
           sendingDomain={

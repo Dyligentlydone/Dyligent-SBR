@@ -86,9 +86,12 @@ export async function provisionNumber(
     smsMethod: "POST",
   });
 
-  // Auto-submit toll-free verification — approval is Twilio-side (a few days),
-  // but the submission itself is fully automated from tenant details.
+  // Start toll-free verification as a hosted Trust Hub inquiry: we prefill
+  // what the tenant already gave us, and Twilio's hosted form collects the
+  // legal/compliance fields (legal entity, EIN, address, policy links, opt-in
+  // proof) that only the owner can provide.
   let verificationSid: string | undefined;
+  let verificationUrl: string | undefined;
   let verificationStatus = "NOT_SUBMITTED";
   if (ownerEmail) {
     try {
@@ -104,11 +107,12 @@ export async function provisionNumber(
         optInType: "WEB_FORM",
         messageVolume: "100",
       });
-      verificationSid = v.registrationId;
-      verificationStatus = "PENDING_REVIEW";
+      verificationSid = v.registrationId ?? v.inquiryId;
+      verificationUrl = v.url;
+      verificationStatus = "NEEDS_OWNER"; // hosted form link — owner completes it
     } catch (err) {
       verificationStatus = "SUBMIT_FAILED";
-      console.error("tollfree verification submit failed", err);
+      console.error("tollfree verification inquiry failed", err);
     }
   }
 
@@ -121,6 +125,7 @@ export async function provisionNumber(
       subAuthToken: subToken,
       verificationSid,
       verificationStatus,
+      verificationUrl,
     },
     create: {
       tenantId,
@@ -130,6 +135,7 @@ export async function provisionNumber(
       subAuthToken: subToken,
       verificationSid,
       verificationStatus,
+      verificationUrl,
     },
   });
   return { phoneNumber: purchased.phoneNumber, sid: purchased.sid, simulated: false };
