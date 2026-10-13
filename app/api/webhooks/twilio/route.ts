@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { db } from "@/lib/db";
 import { toE164 } from "@/lib/lead-parse";
 import { handleLeadReply } from "@/lib/replies";
+import { cancelLeadTasks } from "@/lib/tasks";
 import { logActivity } from "@/lib/activity";
 
 // Inbound SMS webhook (configured on the purchased Twilio number).
@@ -74,6 +75,44 @@ export async function POST(req: Request) {
   });
   if (lead.status === "CONTACTED")
     await db.lead.update({ where: { id: lead.id }, data: { status: "RESPONDED" } });
+
+  // TCPA keyword handling — Twilio sends its own auto-replies; we track state
+  // and cancel anything queued so no automated text ever follows a STOP.
+  const keyword = body.trim().toUpperCase();
+  const isStop = /^(STOP|STOPALL|UNSUBSCRIBE|CANCEL|END|QUIT)$/.test(keyword);
+  const isStart = /^(START|UNSTOP|YES)$/.test(keyword);
+  const isHelp = /^(HELP|INFO)$/.test(keyword);
+
+  if (isStop && !lead.smsOptedOut) {
+    await db.lead.update({ where: { id: lead.id }, data: { smsOptedOut: true } });
+    const cancelled = await cancelLeadTasks(tenantId, lead.id);
+    await logActivity(
+      tenantId,
+      "LEAD_OPTED_OUT",
+      `${lead.name ?? e164} texted STOP — SMS blocked${cancelled ? `, ${cancelled} pending task(s) cancelled` : ""}`,
+      { leadId: lead.id },
+    );
+    return new NextResponse("<Response/>", { headers: { "Content-Type": "text/xml" } });
+  }
+  if (isStart && lead.smsOptedOut) {
+    await db.lead.update({ where: { id: lead.id }, data: { smsOptedOut: false } });
+    await logActivity(tenantId, "LEAD_OPTED_IN", `${lead.name ?? e164} texted START — SMS re-enabled`, {
+      leadId: lead.id,
+    });
+    return new NextResponse("<Response/>", { headers: { "Content-Type": "text/xml" } });
+  }
+  if (isStop || isStart || isHelp)
+    // Keyword-only messages never trigger an AI draft.
+    return new NextResponse("<Response/>", { headers: { "Content-Type": "text/xml" } });
+
+  if (lead.smsOptedOut) {
+    // Engaging again after opting out still doesn't re-enable SMS — TCPA
+    // requires an explicit START. Log it so the owner can follow up by email.
+    await logActivity(tenantId, "REPLY_RECEIVED", `SMS from opted-out lead ${lead.name ?? e164} — reply via email`, {
+      leadId: lead.id,
+    });
+    return new NextResponse("<Response/>", { headers: { "Content-Type": "text/xml" } });
+  }
 
   await handleLeadReply({ tenant: conn.tenant, lead, inboundBody: body, channel: "SMS" });
   await logActivity(tenantId, "REPLY_RECEIVED", `SMS reply from ${lead.name ?? e164}`, {

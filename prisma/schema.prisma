@@ -200,6 +200,7 @@ model Lead {
   followUpCount Int      @default(0)
   // Owner-confirmed bookings are the billing event — AI only suspects them.
   bookingConfirmed Boolean @default(false)
+  smsOptedOut    Boolean  @default(false) // texted STOP — no more SMS until START
   gmailThreadId String?
   gmailMessageId String?
   createdAt     DateTime @default(now())

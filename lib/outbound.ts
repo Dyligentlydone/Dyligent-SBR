@@ -84,6 +84,12 @@ export async function sendSmsToLead(params: {
     });
     return null;
   }
+  if (lead.smsOptedOut) {
+    await logActivity(tenant.id, "SEND_BLOCKED", "Lead opted out of SMS — skipped", {
+      leadId: lead.id,
+    });
+    return null;
+  }
   const conn = await db.twilioConnection.findUnique({ where: { tenantId: tenant.id } });
   if (!conn) {
     await logActivity(tenant.id, "SEND_SKIPPED", "No Twilio number provisioned — SMS skipped", {
@@ -91,13 +97,22 @@ export async function sendSmsToLead(params: {
     });
     return null;
   }
+  // TCPA/carrier requirement: the first text a lead ever gets must carry an
+  // opt-out notice. Detect "first" by counting prior sent SMS to this lead.
+  const priorSms = await db.message.count({
+    where: { leadId: lead.id, channel: "SMS", direction: "OUTBOUND", status: "SENT" },
+  });
+  const body =
+    priorSms === 0 && !/stop/i.test(params.body)
+      ? `${params.body} Reply STOP to opt out.`
+      : params.body;
   try {
-    const { sid, simulated } = await sendSms({ conn, to: toE164(lead.phone), body: params.body });
+    const { sid, simulated } = await sendSms({ conn, to: toE164(lead.phone), body });
     return await recordOutbound({
       tenantId: tenant.id,
       leadId: lead.id,
       channel: "SMS",
-      body: params.body,
+      body,
       status: "SENT",
       externalId: sid,
       isAiGenerated: params.isAiGenerated,
@@ -109,7 +124,7 @@ export async function sendSmsToLead(params: {
       tenantId: tenant.id,
       leadId: lead.id,
       channel: "SMS",
-      body: params.body,
+      body,
       status: "FAILED",
       isAiGenerated: params.isAiGenerated,
       note: err instanceof Error ? err.message : "unknown error",

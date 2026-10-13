@@ -176,6 +176,26 @@ async function runFollowUp(task: ScheduledTask) {
   }
 }
 
+/** Cancel all pending tasks for a lead (e.g. after a STOP opt-out). */
+export async function cancelLeadTasks(tenantId: string, leadId: string): Promise<number> {
+  const pending = await db.scheduledTask.findMany({
+    where: { tenantId, status: "PENDING" },
+  });
+  const mine = pending.filter((t) => {
+    try {
+      return (JSON.parse(t.payload) as { leadId?: string }).leadId === leadId;
+    } catch {
+      return false;
+    }
+  });
+  if (mine.length === 0) return 0;
+  await db.scheduledTask.updateMany({
+    where: { id: { in: mine.map((t) => t.id) } },
+    data: { status: "CANCELLED" },
+  });
+  return mine.length;
+}
+
 /** Execute every PENDING task whose runAt has passed. Returns a count. */
 export async function processDueTasks(): Promise<number> {
   const due = await db.scheduledTask.findMany({
